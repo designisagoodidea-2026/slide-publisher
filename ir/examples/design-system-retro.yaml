@@ -1,0 +1,177 @@
+# Example IR — design-system adoption retrospective.
+# Generic, synthetic. Doubles as a renderer test fixture and the public demo's content.
+
+ir_version: "1.0.0"
+
+deck:
+  title: "Design system at 12 months: what worked, what didn't, what's next"
+  audience:
+    primary: "Product + design leadership, post-adoption"
+    secondary:
+      - "Engineering managers whose teams consume the system"
+      - "Brand + marketing peers tracking visual consistency"
+    prior_knowledge: informed
+  throughline: "The system pays back when adoption is measured on consumption, not coverage — and the next year's investment should follow the consumption gap."
+  arc: situation-first
+  duration_min: 25
+  evidence_anchor: hybrid
+
+slides:
+  - id: title
+    beat: hook
+    layout_intent: title
+    title: "Design system at 12 months"
+    body_blocks:
+      - kind: prose
+        content: "What worked, what didn't, what's next."
+    speaker_notes: |
+      Open with one sentence on why we're doing this retro now: it's the
+      12-month mark, and the next funding cycle starts in six weeks.
+
+  - id: where-we-started
+    beat: context
+    layout_intent: claim_with_evidence
+    title: "Where we started, twelve months ago"
+    body_blocks:
+      - kind: prose
+        content: >
+          We launched the system with three foundation kits — color, type, spacing —
+          and one component library covering forms, navigation, and feedback patterns.
+      - kind: metric
+        content:
+          label: "Components at launch"
+          value: "37"
+          unit: "components"
+          comparison: "Goal at launch was 30."
+    speaker_notes: |
+      Anchor in numbers — sets up the consumption framing later. Don't dwell.
+
+  - id: the-headline
+    beat: claim
+    layout_intent: claim_with_evidence
+    title: "Adoption looks good. Consumption tells a different story."
+    body_blocks:
+      - kind: prose
+        content: >
+          Every product surface uses the system. But fewer than half of the components
+          we shipped are actually rendering in production.
+      - kind: metric
+        content:
+          label: "Coverage (surfaces using ≥1 component)"
+          value: "100"
+          unit: "%"
+      - kind: metric
+        content:
+          label: "Consumption (components used in production)"
+          value: "44"
+          unit: "%"
+          comparison: "Of 37 shipped."
+    speaker_notes: |
+      This is the throughline slide. Land the consumption gap and let it sit before
+      moving on. Audience will instinctively start guessing why.
+
+  - id: three-things-that-worked
+    beat: evidence
+    layout_intent: three_pillars
+    title: "Three things that worked"
+    body_blocks:
+      - kind: bullets
+        content:
+          - "Token-first foundation. Color and type tokens went into every product team's pipeline within six weeks."
+          - "Office hours over docs. A weekly hour for consumers shipped more adoption than a quarter of docs revision."
+          - "Component owners. Each component had a named owner; bugs got fixed in days, not weeks."
+    speaker_notes: |
+      Three pillars; speaker can pause on each. The point: process beat artifacts.
+
+  - id: the-consumption-gap
+    beat: tension
+    layout_intent: comparison
+    title: "Shipped vs. consumed"
+    body_blocks:
+      - kind: bullets
+        content:
+          - "Foundation kits (color, type, spacing): 100% consumption."
+          - "High-traffic components (button, input, modal): 95% consumption."
+          - "Mid-tail (date picker, file upload, banner): 38% consumption."
+          - "Long-tail (29 specialized components): 7% consumption."
+    speaker_notes: |
+      The comparison is shipped × consumed across tiers. Long-tail is where the
+      investment leaked.
+
+  - id: what-the-data-says
+    beat: evidence
+    layout_intent: metrics
+    title: "Where the time went"
+    body_blocks:
+      - kind: metric
+        content:
+          label: "Engineering hours, long-tail components"
+          value: "1,840"
+          unit: "hours"
+          comparison: "31% of total system hours."
+      - kind: metric
+        content:
+          label: "Production renders, long-tail components"
+          value: "2.1"
+          unit: "%"
+          comparison: "Of total component renders."
+      - kind: metric
+        content:
+          label: "Bug reports, long-tail components"
+          value: "0.4"
+          unit: "per month"
+    speaker_notes: |
+      Land the ratio: 31% of hours, 2.1% of renders. The implicit ask: stop
+      investing in the long tail until consumption catches up.
+
+  - id: a-voice-from-the-field
+    beat: evidence
+    layout_intent: quote
+    title: "What we heard, in their words"
+    body_blocks:
+      - kind: quote
+        content:
+          text: >
+            "I knew the date picker existed. I just couldn't tell from the docs whether
+            it handled the timezone case we needed. So I rebuilt it."
+          attribution: "Senior engineer, consumer team"
+    speaker_notes: |
+      One quote that names the consumption-gap mechanism: docs gap, not API gap.
+      Don't generalize from one quote — the bullet pairs with the metric above it.
+
+  - id: what-next
+    beat: resolution
+    layout_intent: three_pillars
+    title: "Year two: invest in consumption, not coverage"
+    body_blocks:
+      - kind: bullets
+        content:
+          - "Stop shipping new long-tail components. Freeze the catalog at 37 until consumption hits 70%."
+          - "Build a docs lane: every component gets a 'when not to use this' section. Owner-authored, not docs-team-authored."
+          - "Track consumption as the headline metric. Coverage moves to a footnote."
+    speaker_notes: |
+      The ask. Land each pillar; the budget conversation hangs off pillar three.
+
+  - id: the-callback
+    beat: callback
+    layout_intent: callout
+    title: "The system pays back when it's used, not when it ships."
+    body_blocks:
+      - kind: prose
+        content: >
+          We can ship the next 30 components and still not move the consumption number.
+          Year two is about closing the gap on the 37 we already have.
+    speaker_notes: |
+      Echoes the throughline. End on the reframe: shipping is not the goal.
+
+  - id: next-steps
+    beat: next
+    layout_intent: callout
+    title: "Next: the funding-cycle proposal lands Tuesday."
+    body_blocks:
+      - kind: prose
+        content: >
+          Two-page memo with the consumption-targets and the freeze proposal.
+          I'll send it ahead of next week's leadership meeting.
+    speaker_notes: |
+      Concrete next step + owner + date. Don't leave the audience without an action.

@@ -1,0 +1,186 @@
+# Example IR — executive briefing on a fictional strategy bet.
+# Generic, synthetic. Exercises section_break, three_pillars, callout, diagram_placeholder.
+
+ir_version: "1.0.0"
+
+deck:
+  title: "The middle-market bet: framing, evidence, ask"
+  audience:
+    primary: "CEO + executive team"
+    secondary:
+      - "Board members joining via the quarterly update"
+    prior_knowledge: cold
+  throughline: "Our growth engine has stalled at the enterprise tier; the middle market is where the next $40M lives, and we need to commit to it before next quarter or watch a competitor get there first."
+  arc: provocation
+  duration_min: 20
+  evidence_anchor: framework
+
+slides:
+  - id: title
+    beat: hook
+    layout_intent: title
+    title: "The middle-market bet"
+    body_blocks:
+      - kind: prose
+        content: "Framing, evidence, ask."
+    speaker_notes: |
+      Three-word agenda. Audience should know the deck is short and decision-shaped.
+
+  - id: provocation
+    beat: hook
+    layout_intent: callout
+    title: "The growth model that got us here will not get us to the next milestone."
+    body_blocks:
+      - kind: prose
+        content: >
+          Enterprise deal flow has been flat for three quarters. The pipeline
+          shape says the next milestone needs a different motion.
+    speaker_notes: |
+      Open with the provocation. Land it; then unpack. Don't soften.
+
+  - id: where-we-are-section
+    beat: context
+    layout_intent: section_break
+    title: "Part 1 — Where we are"
+    speaker_notes: |
+      Brief section break; sets the structure expectations.
+
+  - id: pipeline-shape
+    beat: context
+    layout_intent: claim_with_evidence
+    title: "Enterprise pipeline has plateaued"
+    body_blocks:
+      - kind: prose
+        content: >
+          We've added enterprise sellers for four straight quarters. New-logo
+          deal count has not moved with them.
+      - kind: metric
+        content:
+          label: "Enterprise sellers, Q4 last year"
+          value: "12"
+      - kind: metric
+        content:
+          label: "Enterprise sellers, Q4 this year"
+          value: "21"
+      - kind: metric
+        content:
+          label: "New-logo enterprise deals per quarter"
+          value: "8-10"
+          comparison: "Flat across all four quarters."
+    speaker_notes: |
+      The story is the gap between the input (sellers) and the output (deals).
+      Audience should feel the diminishing return without being told.
+
+  - id: the-evidence-section
+    beat: context
+    layout_intent: section_break
+    title: "Part 2 — Why middle market"
+    speaker_notes: |
+      Transition to the bet itself.
+
+  - id: three-reasons
+    beat: claim
+    layout_intent: three_pillars
+    title: "Three reasons the middle market is the next motion"
+    body_blocks:
+      - kind: bullets
+        content:
+          - "Market shape: 4× the addressable accounts at a third of the ACV. The aggregate is bigger than our enterprise TAM."
+          - "Sales cycle: 40 days versus our enterprise cycle of 180. We can iterate the playbook six times in the time enterprise lets us iterate once."
+          - "Competitive: two competitors are running the same play but neither has product-market fit yet. The window is ~3 quarters."
+    speaker_notes: |
+      Three pillars; this is where the strategic case lives. Take time on each.
+
+  - id: tam-diagram
+    beat: evidence
+    layout_intent: image_with_caption
+    title: "Addressable market by segment"
+    body_blocks:
+      - kind: diagram_placeholder
+        content:
+          alt: "Two-by-two: ACV (low/high) × Account count (low/high). Enterprise sits in low-count/high-ACV. Middle market sits in high-count/medium-ACV. Aggregate ARR for each quadrant labeled."
+          intent: "Make the relative size of the middle-market quadrant visually obvious. Use color to distinguish; do not use a pie chart."
+      - kind: prose
+        content: >
+          Middle-market aggregate ARR (4× accounts × 0.33 ACV) is 1.32× enterprise.
+          That's before any product or pricing changes.
+    speaker_notes: |
+      Diagram lands the headline. Number lands the size of the bet.
+
+  - id: competitive-tension
+    beat: tension
+    layout_intent: comparison
+    title: "Two competitors are running this play. Neither has won yet."
+    body_blocks:
+      - kind: bullets
+        content:
+          - "Competitor A: launched middle-market motion 6 months ago. Pipeline is growing but conversion is below their enterprise baseline."
+          - "Competitor B: announced last quarter. No public pipeline data yet."
+          - "Our advantage: existing distribution into the middle-market segment via the self-serve tier. Neither competitor has this."
+    speaker_notes: |
+      The competitive frame closes the case. We are not the only ones who see
+      this — but we have a structural advantage.
+
+  - id: the-ask-section
+    beat: claim
+    layout_intent: section_break
+    title: "Part 3 — The ask"
+    speaker_notes: |
+      Transition to the decision shape.
+
+  - id: investment-shape
+    beat: resolution
+    layout_intent: claim_with_evidence
+    title: "$8M, two quarters, one team"
+    body_blocks:
+      - kind: prose
+        content: >
+          A dedicated middle-market team — 12 people, half from existing
+          enterprise headcount — running a focused playbook for two quarters.
+      - kind: bullets
+        content:
+          - "$8M total: $5.5M people, $2M tooling + ops, $0.5M experimentation budget."
+          - "Two-quarter commitment. Measurable kill criteria at end of Q2."
+          - "Goal: $40M ARR within 18 months."
+    speaker_notes: |
+      The specific ask. Tight numbers, clear scope, defined kill point.
+
+  - id: kill-criteria
+    beat: tension
+    layout_intent: three_pillars
+    title: "What success and failure look like at the 6-month mark"
+    body_blocks:
+      - kind: bullets
+        content:
+          - "GREEN at 6mo: ≥30 new-logo middle-market deals, sales cycle ≤ 60 days, CAC payback < 18mo. Continue and expand."
+          - "YELLOW at 6mo: 15-29 new-logo deals OR cycle 60-90 days. Continue with a re-scoped playbook."
+          - "RED at 6mo: < 15 new-logo deals OR cycle > 90 days OR CAC payback > 24mo. Wind down; redeploy headcount."
+    speaker_notes: |
+      Pre-commit to the kill criteria. This is what makes the ask responsible
+      rather than reckless. Walk through each color.
+
+  - id: callback
+    beat: callback
+    layout_intent: callout
+    title: "We will not enterprise-scale our way out of an enterprise plateau."
+    body_blocks:
+      - kind: prose
+        content: >
+          The bet is a different motion, not more of the existing one. The
+          window is three quarters. The decision is now.
+    speaker_notes: |
+      The throughline restated. Don't soften the framing — that's the point of
+      the deck. Pause before next slide.
+
+  - id: next-steps
+    beat: next
+    layout_intent: callout
+    title: "Decision needed: this exec meeting or next."
+    body_blocks:
+      - kind: bullets
+        content:
+          - "I'll circulate the full memo + financial model by Friday."
+          - "Decision target: next exec meeting, two weeks out."
+          - "If approved: team formation starts within a week of decision."
+    speaker_notes: |
+      Concrete decision target. End the deck with the next action clearly owned.

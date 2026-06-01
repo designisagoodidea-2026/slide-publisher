@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# Anonymity pre-push hook for the slide-publisher public plugin.
+#
+# Install (one-time, after `git init` in plugin/):
+#   git config core.hooksPath plugin/.githooks
+#   chmod +x plugin/.githooks/pre-push
+#
+# Behavior: scans the working tree for forbidden tokens and blocks push on hits.
+# Run from anywhere — the hook resolves its own anchor directory.
+
+set -euo pipefail
+
+ANCHOR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# Forbidden tokens in plugin/ contents.
+#   - jason, armstrong   → personal name
+#   - designisagoodidea@ → email; the bare handle "designisagoodidea-2026" is OK
+PATTERN='(jason|armstrong|designisagoodidea@)'
+
+HITS=$(
+  grep -rEi "$PATTERN" "$ANCHOR" \
+    --exclude-dir=node_modules \
+    --exclude-dir=.git \
+    --exclude-dir=.githooks \
+    --exclude-dir=__pycache__ \
+    --exclude="*.pyc" \
+    || true
+)
+
+if [ -n "$HITS" ]; then
+  echo
+  echo "ANONYMITY VIOLATION — push blocked."
+  echo "The following lines contain forbidden tokens:"
+  echo
+  echo "$HITS"
+  echo
+  echo "Fix and retry. To force-push past this hook (DO NOT do this lightly):"
+  echo "  git push --no-verify"
+  exit 1
+fi
+
+echo "Anonymity check: clean."
+exit 0

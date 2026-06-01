@@ -1,0 +1,62 @@
+# Example template profile — pptx only.
+# Synthetic. Represents a user who supplied a .pptx template at install
+# and wants pptx as their default render target.
+
+profile_version: "1.0.0"
+preferred_output: pptx
+
+templates:
+  pptx:
+    path: "~/templates/neutral-corporate.pptx"
+    layout_map:
+      title: "Title Slide"
+      section_break: "Section Divider"
+      claim_with_evidence: "Claim + Supporting"
+      three_pillars: "Three Column"
+      comparison: "Two Column Compare"
+      quote: "Pull Quote"
+      image_with_caption: "Image + Caption"
+      metrics: "Stat Block"
+      timeline: "Timeline Horizontal"
+      callout: "Big Statement"
+    quality_score: 88
+
+style_tokens:
+  colors:
+    primary: "#1F2A44"
+    secondary: "#3F6AB1"
+    accent: "#E2A03F"
+    text-primary: "#111418"
+    text-secondary: "#5B6470"
+    surface: "#FFFFFF"
+    surface-muted: "#F4F5F8"
+  typography:
+    heading-1:
+      family: "Inter"
+      size_pt: 40
+      weight: 700
+      line_height: 1.1
+    heading-2:
+      family: "Inter"
+      size_pt: 28
+      weight: 600
+      line_height: 1.2
+    body:
+      family: "Inter"
+      size_pt: 18
+      weight: 400
+      line_height: 1.4
+    caption:
+      family: "Inter"
+      size_pt: 12
+      weight: 400
+      line_height: 1.35
+  spacing:
+    xs: 4
+    sm: 8
+    md: 16
+    lg: 24
+    xl: 40
+
+setup_completed: "2026-06-01"
+setup_version: "0.1.0-pre"

@@ -1,0 +1,162 @@
+# Example IR — post-launch readout for a fictional B2B product surface.
+# Generic, synthetic. Exercises timeline, metrics, comparison, and image_placeholder.
+
+ir_version: "1.0.0"
+
+deck:
+  title: "Onboarding redesign: 30-day readout"
+  audience:
+    primary: "Product + growth leadership"
+    secondary:
+      - "Customer success team handling the affected segment"
+      - "Engineering managers who scoped the build"
+    prior_knowledge: warm
+  throughline: "The redesign hit activation but missed time-to-value — and the gap is concentrated in a single integration step we can fix in v1.1."
+  arc: problem-first
+  duration_min: 15
+  evidence_anchor: numbers
+
+slides:
+  - id: title
+    beat: hook
+    layout_intent: title
+    title: "Onboarding redesign: 30-day readout"
+    body_blocks:
+      - kind: prose
+        content: "Mixed results, one clear next step."
+    speaker_notes: |
+      Set the tone early — this isn't a victory lap, it's a diagnostic. Audience
+      should know what kind of conversation this is in the first 30 seconds.
+
+  - id: what-we-shipped
+    beat: context
+    layout_intent: timeline
+    title: "What shipped, when"
+    body_blocks:
+      - kind: bullets
+        content:
+          - "Week 1-3: research synthesis from 22 customer interviews."
+          - "Week 4-6: redesign of the four-step setup flow into a guided wizard."
+          - "Week 7: dark launch to 10% of new accounts."
+          - "Week 8: full rollout to 100% of new accounts."
+          - "Week 9-12: 30-day measurement window. We are here."
+    speaker_notes: |
+      Compress the timeline — audience knows this. Move to results quickly.
+
+  - id: the-headline-mixed
+    beat: claim
+    layout_intent: comparison
+    title: "Activation up, time-to-value down — but not by enough"
+    body_blocks:
+      - kind: bullets
+        content:
+          - "Activation (account → first successful action): +18% vs. control."
+          - "Time-to-value (account → first business outcome): -22% vs. control."
+          - "Target was -50% on time-to-value. We hit less than half."
+    speaker_notes: |
+      The mixed read is the story. Activation is good news; time-to-value
+      undershot the target. The next slides explain why.
+
+  - id: the-numbers
+    beat: evidence
+    layout_intent: metrics
+    title: "By the numbers"
+    body_blocks:
+      - kind: metric
+        content:
+          label: "Activation rate"
+          value: "62"
+          unit: "%"
+          comparison: "Control: 53%. +18% relative."
+      - kind: metric
+        content:
+          label: "Median time-to-value"
+          value: "4.1"
+          unit: "days"
+          comparison: "Control: 5.3 days. -22% relative; target was -50%."
+      - kind: metric
+        content:
+          label: "Drop-off at step 3 (integration)"
+          value: "31"
+          unit: "%"
+          comparison: "Up from 24% in the control. Worst step in the flow."
+    speaker_notes: |
+      The third number is the diagnostic — drop-off at step 3 went the wrong
+      direction. That's the integration step. Next slide explains.
+
+  - id: the-integration-step
+    beat: tension
+    layout_intent: image_with_caption
+    title: "Step 3 is where the time-to-value gap lives"
+    body_blocks:
+      - kind: image_placeholder
+        content:
+          alt: "Funnel diagram showing four onboarding steps with drop-off rates."
+          intent: "Funnel visualization. Each step is a horizontal band; widths scale with cohort size. Step 3 should be visibly narrower than the control."
+      - kind: prose
+        content: >
+          The new flow front-loaded onboarding by asking users to connect their
+          data source on step 3 instead of step 4. That's where we lost the gap.
+    speaker_notes: |
+      Show the funnel. The audience needs to see the cliff to feel the diagnostic.
+      Talk through the design rationale: we moved the integration earlier on purpose
+      to surface friction; we underestimated how much friction it would surface.
+
+  - id: what-customers-said
+    beat: evidence
+    layout_intent: quote
+    title: "What customers told us"
+    body_blocks:
+      - kind: quote
+        content:
+          text: >
+            "I wanted to get to the dashboard first and see what I was setting up.
+            Connecting the data source before I knew what I was looking at felt
+            premature."
+          attribution: "Customer interview, week 11"
+    speaker_notes: |
+      One representative quote. Don't overgeneralize — pair with the funnel data.
+
+  - id: v1-1-fix
+    beat: resolution
+    layout_intent: claim_with_evidence
+    title: "v1.1: move the integration back to step 4 — with a preview at step 3"
+    body_blocks:
+      - kind: prose
+        content: >
+          Show users a dashboard preview at step 3 with sample data so they can see
+          what they're setting up. Move the actual integration to step 4 where it
+          used to live, but with the redesigned guidance from the v1 work.
+      - kind: bullets
+        content:
+          - "Engineering estimate: 2 weeks."
+          - "Hypothesis: time-to-value gap closes to -45% vs. control."
+          - "Decision point on v1.1 ship: this Friday."
+    speaker_notes: |
+      The fix is small. The decision is whether we ship it now or fold it into v2.
+      Recommendation: ship now.
+
+  - id: callback
+    beat: callback
+    layout_intent: callout
+    title: "Activation isn't the goal. Time-to-value is."
+    body_blocks:
+      - kind: prose
+        content: >
+          We hit activation by removing friction the user actually needed. The
+          v1.1 work puts the right friction back in the right place.
+    speaker_notes: |
+      Echo the throughline. The reframe lands the recommendation.
+
+  - id: next-steps
+    beat: next
+    layout_intent: callout
+    title: "Decision Friday. v1.1 ships in 2 weeks."
+    body_blocks:
+      - kind: bullets
+        content:
+          - "I'll circulate a one-pager Thursday EOD."
+          - "Decision call Friday 10am."
+          - "If go: v1.1 ships week of Mar 3."
+    speaker_notes: |
+      Concrete owner + date. End the deck with a clear next action.

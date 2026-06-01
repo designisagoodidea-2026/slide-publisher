@@ -1,0 +1,170 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://designisagoodidea-2026.github.io/slide-publisher/schemas/template-profile/v1.json",
+  "title": "Slide Publisher — Template Profile",
+  "description": "Per-user adapter between the generic Deck IR and the user's brand-consistent output. Produced by the template-setup wizard at install. Consumed by renderers on every render.",
+  "type": "object",
+  "required": [
+    "profile_version",
+    "preferred_output",
+    "templates",
+    "setup_completed",
+    "setup_version"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "profile_version": {
+      "description": "Semver of the template-profile schema this document targets. v0.1 plugins emit '1.0.0'.",
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "preferred_output": {
+      "description": "Default render target. Other renderers remain available per-compile.",
+      "type": "string",
+      "enum": ["pptx", "figma", "gslides"]
+    },
+    "templates": {
+      "description": "Per-format template references + layout maps + quality scores. At least one format must be present.",
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "pptx": { "$ref": "#/$defs/template_pptx" },
+        "figma": { "$ref": "#/$defs/template_figma" },
+        "gslides": { "$ref": "#/$defs/template_gslides" }
+      }
+    },
+    "style_tokens": { "$ref": "#/$defs/style_tokens" },
+    "voice_constraints": {
+      "description": "Optional pointer to a user-supplied voice/style spec. The plugin ships no defaults; users wire their own.",
+      "type": "string"
+    },
+    "setup_completed": {
+      "description": "ISO 8601 date the install wizard completed.",
+      "type": "string",
+      "format": "date"
+    },
+    "setup_version": {
+      "description": "Semver of the plugin version that ran the install wizard.",
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(-[A-Za-z0-9.-]+)?$"
+    }
+  },
+  "$defs": {
+    "layout_map": {
+      "description": "Maps each IR layout_intent to the template's concrete layout. Every layout_intent in v0.1 should be mapped; unmapped intents fall back to the documented 'nearest available' rule with an explicit loss-manifest entry.",
+      "type": "object",
+      "additionalProperties": { "type": "string", "minLength": 1 },
+      "properties": {
+        "title": { "type": "string" },
+        "section_break": { "type": "string" },
+        "claim_with_evidence": { "type": "string" },
+        "three_pillars": { "type": "string" },
+        "comparison": { "type": "string" },
+        "quote": { "type": "string" },
+        "image_with_caption": { "type": "string" },
+        "metrics": { "type": "string" },
+        "timeline": { "type": "string" },
+        "callout": { "type": "string" }
+      }
+    },
+    "quality_score": {
+      "description": "0-100 score from template-validator. Findings live in the sidecar quality report.",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "template_pptx": {
+      "type": "object",
+      "required": ["path", "layout_map", "quality_score"],
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "description": "Local filesystem path to the user's .pptx template.",
+          "type": "string",
+          "minLength": 1
+        },
+        "layout_map": { "$ref": "#/$defs/layout_map" },
+        "quality_score": { "$ref": "#/$defs/quality_score" }
+      }
+    },
+    "template_figma": {
+      "type": "object",
+      "required": ["file_key", "layout_map", "quality_score"],
+      "additionalProperties": false,
+      "properties": {
+        "file_key": {
+          "description": "Figma file key for the user's template.",
+          "type": "string",
+          "minLength": 1
+        },
+        "layout_map": {
+          "description": "Maps IR layout_intent to Figma node ID of the slide template.",
+          "$ref": "#/$defs/layout_map"
+        },
+        "template_map_json": {
+          "description": "Path to the cached sidecar produced by the Figma publish chain (per-file-key cache of node IDs and resolved styles).",
+          "type": "string"
+        },
+        "quality_score": { "$ref": "#/$defs/quality_score" }
+      }
+    },
+    "template_gslides": {
+      "description": "v0.2 surface. Schema-supported in v0.1 for forward compatibility; the v0.1 plugin will not write or read this branch.",
+      "type": "object",
+      "required": ["file_id", "layout_map", "quality_score"],
+      "additionalProperties": false,
+      "properties": {
+        "file_id": {
+          "description": "Google Slides file ID for the user's template.",
+          "type": "string",
+          "minLength": 1
+        },
+        "layout_map": { "$ref": "#/$defs/layout_map" },
+        "quality_score": { "$ref": "#/$defs/quality_score" }
+      }
+    },
+    "style_tokens": {
+      "description": "Extracted token system from the user's template. Optional; populated by extractors when possible.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "colors": {
+          "description": "Named color tokens. Values are hex strings.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$"
+          }
+        },
+        "typography": {
+          "description": "Named type tokens. Each token names a font family, size, weight, and optional line-height.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["family", "size_pt", "weight"],
+            "additionalProperties": false,
+            "properties": {
+              "family": { "type": "string", "minLength": 1 },
+              "size_pt": { "type": "number", "exclusiveMinimum": 0 },
+              "weight": {
+                "type": "integer",
+                "minimum": 100,
+                "maximum": 900
+              },
+              "line_height": { "type": "number", "exclusiveMinimum": 0 }
+            }
+          }
+        },
+        "spacing": {
+          "description": "Named spacing tokens. Values are point sizes.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          }
+        }
+      }
+    }
+  }
+}

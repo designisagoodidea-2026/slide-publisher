@@ -1,0 +1,63 @@
+# Example template profile — Figma only.
+# Synthetic. Represents a user who supplied a Figma file at install
+# and wants Figma Slides as their default render target.
+
+profile_version: "1.0.0"
+preferred_output: figma
+
+templates:
+  figma:
+    file_key: "FAKE-FILE-KEY-replace-with-your-own"
+    layout_map:
+      title: "1:1234"
+      section_break: "1:1240"
+      claim_with_evidence: "1:1250"
+      three_pillars: "1:1260"
+      comparison: "1:1270"
+      quote: "1:1280"
+      image_with_caption: "1:1290"
+      metrics: "1:1300"
+      timeline: "1:1310"
+      callout: "1:1320"
+    template_map_json: "~/.cowork/plugins/slide-publisher/figma-FAKE-FILE-KEY/template-map.json"
+    quality_score: 92
+
+style_tokens:
+  colors:
+    brand-primary: "#0B5FFF"
+    brand-secondary: "#0A3A8C"
+    text-primary: "#0A0A0F"
+    text-secondary: "#4A5160"
+    surface: "#FFFFFF"
+    surface-muted: "#F2F4F8"
+    accent-warn: "#D97706"
+  typography:
+    display:
+      family: "Söhne"
+      size_pt: 48
+      weight: 700
+      line_height: 1.05
+    heading:
+      family: "Söhne"
+      size_pt: 32
+      weight: 600
+      line_height: 1.15
+    body:
+      family: "Söhne"
+      size_pt: 20
+      weight: 400
+      line_height: 1.4
+    mono:
+      family: "JetBrains Mono"
+      size_pt: 16
+      weight: 400
+      line_height: 1.35
+  spacing:
+    xs: 4
+    sm: 8
+    md: 16
+    lg: 32
+    xl: 64
+
+setup_completed: "2026-06-01"
+setup_version: "0.1.0-pre"

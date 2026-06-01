@@ -1,0 +1,45 @@
+# slide-publisher — Cowork plugin manifest
+name: slide-publisher
+version: 0.1.0-pre
+display_name: Slide Publisher
+tagline: Story-aware slide generation across PowerPoint and Figma Slides.
+description: |
+  Compile a story (audience, throughline, beats, evidence) into a portable slide IR,
+  then render to PowerPoint or Figma Slides. Each render produces a loss manifest
+  naming what's lossless, lossy, dropped, or annotated. Built on a translation pattern
+  for heterogeneous deck targets, applied to slides.
+maintainer: designisagoodidea-2026
+homepage: https://designisagoodidea-2026.github.io/slide-publisher/
+license: MIT
+
+requires:
+  cowork: ">=0.x"
+  python: ">=3.10"
+
+skills:
+  # v0.1 — eight skills
+  - template-setup            # one-time install wizard; produces the template profile
+  - template-validator        # structural quality check; green/yellow/red findings
+  - template-extractor-pptx   # loose .pptx deck → synthesized template
+  - template-extractor-figma  # loose Figma deck → synthesized template
+  - story-compiler            # outline-mode input → IR
+  - slide-ir-validator        # validates an IR against schema + lint rules
+  - render-pptx               # IR + template profile → .pptx (via global pptx skill)
+  - render-figma              # IR + template profile → Figma Slides
+  # v0.2 (stubs only in v0.1)
+  # - template-extractor-gslides
+  # - render-gslides
+
+mcps:
+  required:
+    - figma                   # user supplies their own Figma MCP credentials
+  # v0.2:
+  # optional:
+  #   - google-slides
+
+suggested_global_skills:
+  - anthropic-skills:storytelling
+  - anthropic-skills:pptx
+
+# voice_constraints in the IR is an optional pointer to any user-supplied voice/style
+# skill. The plugin ships no voice defaults and suggests no specific voice skill.

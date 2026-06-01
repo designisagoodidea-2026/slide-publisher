@@ -1,0 +1,268 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://designisagoodidea-2026.github.io/slide-publisher/schemas/ir/v1.json",
+  "title": "Slide Publisher — Deck IR",
+  "description": "Story-aware intermediate representation for slide decks. Two scopes: deck-level (story scaffolding) and slide-level (per-slide content + layout intent). YAML for hand-authoring; this schema validates the parsed structure.",
+  "type": "object",
+  "required": ["ir_version", "deck", "slides"],
+  "additionalProperties": false,
+  "properties": {
+    "ir_version": {
+      "description": "Semver of the IR schema this document targets. v0.1 plugins emit '1.0.0'.",
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "deck": { "$ref": "#/$defs/deck" },
+    "slides": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/slide" }
+    }
+  },
+  "$defs": {
+    "deck": {
+      "type": "object",
+      "required": [
+        "title",
+        "audience",
+        "throughline",
+        "arc",
+        "evidence_anchor"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "audience": { "$ref": "#/$defs/audience" },
+        "throughline": {
+          "description": "The one sentence the audience leaves with. Compiler refuses to draft if missing.",
+          "type": "string",
+          "minLength": 1
+        },
+        "arc": {
+          "description": "Story arc shape.",
+          "type": "string",
+          "enum": [
+            "problem-first",
+            "situation-first",
+            "provocation",
+            "case-led",
+            "reverse-chronological"
+          ]
+        },
+        "duration_min": {
+          "description": "Target talk duration in minutes. Used by renderers to pace slide count vs. content density.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 240
+        },
+        "evidence_anchor": {
+          "description": "Primary evidence kind that anchors the deck. Compiler refuses to draft if missing.",
+          "type": "string",
+          "enum": ["numbers", "story", "demo", "framework", "hybrid"]
+        },
+        "voice_constraints": {
+          "description": "Optional pointer to a user-supplied voice/style spec. The plugin ships no defaults; users wire their own.",
+          "type": "string"
+        }
+      }
+    },
+    "audience": {
+      "type": "object",
+      "required": ["primary", "prior_knowledge"],
+      "additionalProperties": false,
+      "properties": {
+        "primary": {
+          "description": "Primary audience descriptor — role + stage. Compiler refuses to draft if missing.",
+          "type": "string",
+          "minLength": 1
+        },
+        "secondary": {
+          "description": "Secondary audience descriptors (optional).",
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "prior_knowledge": {
+          "description": "How much the audience already knows about the subject.",
+          "type": "string",
+          "enum": ["cold", "warm", "informed", "expert"]
+        }
+      }
+    },
+    "slide": {
+      "type": "object",
+      "required": ["id", "beat", "layout_intent", "title"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "description": "Stable identifier within the deck. kebab-case recommended.",
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*$"
+        },
+        "beat": {
+          "description": "Narrative role of this slide in the arc.",
+          "type": "string",
+          "enum": [
+            "hook",
+            "context",
+            "problem",
+            "claim",
+            "evidence",
+            "tension",
+            "resolution",
+            "callback",
+            "next"
+          ]
+        },
+        "layout_intent": {
+          "description": "Renderer-agnostic layout intent. Each renderer maps this to a template layout via the template profile's layout_map.",
+          "type": "string",
+          "enum": [
+            "title",
+            "section_break",
+            "claim_with_evidence",
+            "three_pillars",
+            "comparison",
+            "quote",
+            "image_with_caption",
+            "metrics",
+            "timeline",
+            "callout"
+          ]
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "body_blocks": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/body_block" }
+        },
+        "speaker_notes": {
+          "type": "string"
+        },
+        "transitions": { "$ref": "#/$defs/transitions" }
+      }
+    },
+    "transitions": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "from_prior": {
+          "description": "How this slide relates to the one before. Used by speaker-notes synthesis + transition warnings.",
+          "type": "string"
+        },
+        "to_next": {
+          "description": "How this slide hands off to the one after.",
+          "type": "string"
+        }
+      }
+    },
+    "body_block": {
+      "description": "A typed content block. The 'kind' discriminator constrains the shape of 'content'.",
+      "type": "object",
+      "required": ["kind", "content"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "prose",
+            "bullets",
+            "metric",
+            "quote",
+            "image_placeholder",
+            "diagram_placeholder"
+          ]
+        },
+        "content": {}
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "const": "prose" } } },
+          "then": { "properties": { "content": { "type": "string", "minLength": 1 } } }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "bullets" } } },
+          "then": {
+            "properties": {
+              "content": {
+                "type": "array",
+                "minItems": 1,
+                "items": { "type": "string", "minLength": 1 }
+              }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "metric" } } },
+          "then": {
+            "properties": {
+              "content": {
+                "type": "object",
+                "required": ["label", "value"],
+                "additionalProperties": false,
+                "properties": {
+                  "label": { "type": "string", "minLength": 1 },
+                  "value": { "type": "string", "minLength": 1 },
+                  "unit": { "type": "string" },
+                  "comparison": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "quote" } } },
+          "then": {
+            "properties": {
+              "content": {
+                "type": "object",
+                "required": ["text"],
+                "additionalProperties": false,
+                "properties": {
+                  "text": { "type": "string", "minLength": 1 },
+                  "attribution": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "image_placeholder" } } },
+          "then": {
+            "properties": {
+              "content": {
+                "type": "object",
+                "required": ["alt", "intent"],
+                "additionalProperties": false,
+                "properties": {
+                  "alt": { "type": "string", "minLength": 1 },
+                  "intent": { "type": "string", "minLength": 1 }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "diagram_placeholder" } } },
+          "then": {
+            "properties": {
+              "content": {
+                "type": "object",
+                "required": ["alt", "intent"],
+                "additionalProperties": false,
+                "properties": {
+                  "alt": { "type": "string", "minLength": 1 },
+                  "intent": { "type": "string", "minLength": 1 }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
