@@ -1,0 +1,31 @@
+{
+  "file_key": "SYNTHETIC-TEST-FILE-KEY",
+  "slide_templates": [
+    {"node_id": "1:100", "title_text": "Title Slide"},
+    {"node_id": "1:110", "title_text": "Section Header"},
+    {"node_id": "1:120", "title_text": "Title and Content"},
+    {"node_id": "1:130", "title_text": "Three Column"},
+    {"node_id": "1:140", "title_text": "Comparison"},
+    {"node_id": "1:150", "title_text": "Pull Quote"},
+    {"node_id": "1:160", "title_text": "Image and Caption"},
+    {"node_id": "1:170", "title_text": "Stat Block"},
+    {"node_id": "1:180", "title_text": "Timeline"},
+    {"node_id": "1:190", "title_text": "Big Statement"}
+  ],
+  "color_styles": [
+    {"name": "Brand/Primary", "hex": "#1F2A44"},
+    {"name": "Brand/Secondary", "hex": "#3F6AB1"},
+    {"name": "Brand/Accent", "hex": "#E2A03F"},
+    {"name": "Text/Primary", "hex": "#0A0A0F"},
+    {"name": "Text/Secondary", "hex": "#4A5160"},
+    {"name": "Surface/Default", "hex": "#FFFFFF"},
+    {"name": "Surface/Muted", "hex": "#F4F5F8"}
+  ],
+  "text_styles": [
+    {"name": "Display/L", "family": "Söhne", "size_pt": 48, "weight": 700, "line_height": 1.1},
+    {"name": "Heading/1", "family": "Söhne", "size_pt": 32, "weight": 700, "line_height": 1.15},
+    {"name": "Heading/2", "family": "Söhne", "size_pt": 24, "weight": 600, "line_height": 1.2},
+    {"name": "Body/Regular", "family": "Söhne", "size_pt": 18, "weight": 400, "line_height": 1.4},
+    {"name": "Caption", "family": "Söhne", "size_pt": 12, "weight": 400, "line_height": 1.35}
+  ]
+}
