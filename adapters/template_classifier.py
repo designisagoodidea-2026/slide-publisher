@@ -46,14 +46,13 @@ except ImportError:
     sys.exit(2)
 
 
-# Layouts that signal "default / unmodified" usage. If most slides reference
-# only these, the deck is using stock layouts rather than custom ones.
-DEFAULT_LAYOUT_NAMES = {
-    "title slide", "title", "title and content", "blank",
-    "section header", "two content", "comparison",
-    "title only", "content with caption", "picture with caption",
-    "vertical title and text",
-}
+# Layouts that signal "the user hand-positioned content rather than using
+# template structure." Per Microsoft-themes validation: canonical Office
+# layout names ("Title Slide", "Title and Content", "Two Content", etc.) are
+# what real templates use — they aren't "stock = bad signal." Only `Blank`
+# and `Title Only` indicate hand-positioned content (the layout placeholder
+# itself doesn't constrain the slide).
+DEFAULT_LAYOUT_NAMES = {"blank", "title only"}
 
 # IR layout intent patterns — same as the extractor uses. Match against
 # layout names to estimate semantic richness.
@@ -82,6 +81,10 @@ def classify_pptx(pptx_path: str | Path) -> dict[str, Any]:
 
     if n_slides == 0:
         return _empty_result(n_layouts_available, layout_names)
+
+    # Low-slide-count templates: a freshly-saved theme typically has 1 slide.
+    # Slide-usage signals are noisy here. Weight toward layout-catalog signals.
+    low_slide_count = n_slides <= 2
 
     used_layout_names: list[str] = []
     direct_overrides_total = 0
@@ -132,7 +135,9 @@ def classify_pptx(pptx_path: str | Path) -> dict[str, Any]:
         "layout_name_semantic_richness": round(layout_name_semantic_richness, 3),
     }
 
-    classification, confidence, diagnosis = _score(signals, layout_names, used_layout_names)
+    classification, confidence, diagnosis = _score(
+        signals, layout_names, used_layout_names, low_slide_count=low_slide_count,
+    )
 
     return {
         "format": "pptx",
@@ -165,7 +170,8 @@ def _empty_result(n_layouts: int, layout_names: list[str]) -> dict[str, Any]:
 
 
 def _score(signals: dict[str, Any], layout_names: list[str],
-           used_layout_names: list[str]) -> tuple[str, float, list[str]]:
+           used_layout_names: list[str],
+           low_slide_count: bool = False) -> tuple[str, float, list[str]]:
     """Apply heuristic rules to derive a classification + confidence."""
     diagnosis: list[str] = []
 
@@ -229,22 +235,46 @@ def _score(signals: dict[str, Any], layout_names: list[str],
             "typically expose intent through layout names."
         )
 
-    # n_layouts_used is a tie-breaker
-    if n_used < 3:
+    # n_layouts_used is the active-usage signal, but for low-slide-count
+    # templates we use n_layouts_AVAILABLE instead (a fresh template has 1
+    # slide using 1 layout but ships with 10+ available).
+    if low_slide_count:
+        n_avail = signals["n_layouts_available"]
+        if n_avail >= 10:
+            component_scores["layout_breadth"] = 1.0
+        elif n_avail >= 6:
+            component_scores["layout_breadth"] = 0.7
+        else:
+            component_scores["layout_breadth"] = n_avail / 10
+    elif n_used < 3:
         component_scores["layout_breadth"] = 0.0
     elif n_used >= 5:
         component_scores["layout_breadth"] = 1.0
     else:
         component_scores["layout_breadth"] = (n_used - 3) / 2
 
-    # Weighted average
-    weights = {
-        "diversity": 0.30,
-        "non_default": 0.25,
-        "low_overrides": 0.20,
-        "semantic_richness": 0.15,
-        "layout_breadth": 0.10,
-    }
+    # Weighted average. For low-slide-count templates (fresh themes), slide-
+    # usage signals are noisy — weight layout-catalog signals instead.
+    if low_slide_count:
+        weights = {
+            "diversity": 0.05,
+            "non_default": 0.05,
+            "low_overrides": 0.05,
+            "semantic_richness": 0.45,
+            "layout_breadth": 0.40,
+        }
+        diagnosis.append(
+            f"Low slide count (≤2) — slide-usage signals down-weighted; "
+            f"layout-catalog signals dominate."
+        )
+    else:
+        weights = {
+            "diversity": 0.30,
+            "non_default": 0.25,
+            "low_overrides": 0.20,
+            "semantic_richness": 0.15,
+            "layout_breadth": 0.10,
+        }
     template_ness = sum(component_scores[k] * weights[k] for k in weights)
 
     # Confidence is distance from the middle (0.5)

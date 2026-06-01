@@ -54,71 +54,33 @@ LAYOUT_FALLBACKS: dict[str, list[str]] = {
 }
 
 
-# ---- Loss manifest (mirrors pptx_renderer.py) ----------------------------
+# ---- Loss manifest — uses _common.LossManifest with file_key in `extra` ----
 
-@dataclass
-class LossEntry:
-    category: str          # LOSSLESS | LOSSY | DROPPED | ANNOTATED
-    slide_id: str | None
-    field: str
-    detail: str
-
-    def to_dict(self) -> dict:
-        return {
-            "category": self.category,
-            "slide_id": self.slide_id,
-            "field": self.field,
-            "detail": self.detail,
-        }
+sys.path.insert(0, str(Path(__file__).parent))
+from _common import LossManifest, LossEntry  # noqa: E402
 
 
-@dataclass
-class LossManifest:
-    deck_title: str = ""
-    rendered_at: str = ""
-    renderer: str = "render-figma"
-    file_key: str = ""
-    entries: list[LossEntry] = field(default_factory=list)
+def _patch_loss_manifest_file_key() -> None:
+    """Shim: route legacy `manifest.file_key` to the shared `extra` dict."""
+    def _get(self):
+        return self.extra.get("file_key", "")
+    def _set(self, value):
+        self.extra["file_key"] = value
+    if not hasattr(LossManifest, "file_key"):
+        LossManifest.file_key = property(_get, _set)  # type: ignore
 
-    def add(self, category: str, slide_id: str | None, field_name: str, detail: str) -> None:
-        self.entries.append(LossEntry(category, slide_id, field_name, detail))
 
-    def to_markdown(self) -> str:
-        counts = {cat: sum(1 for e in self.entries if e.category == cat)
-                  for cat in ["LOSSLESS", "LOSSY", "DROPPED", "ANNOTATED"]}
-        lines = [
-            f"> Summary: {counts['LOSSLESS']} lossless, {counts['LOSSY']} lossy, "
-            f"{counts['DROPPED']} dropped, {counts['ANNOTATED']} annotated.\n",
-            f"# Loss manifest — {self.deck_title}",
-            "",
-            f"- Rendered: {self.rendered_at}",
-            f"- Renderer: `{self.renderer}`",
-            f"- Figma file: `{self.file_key}`",
-            "",
-        ]
-        for cat in ["LOSSLESS", "LOSSY", "DROPPED", "ANNOTATED"]:
-            cat_entries = [e for e in self.entries if e.category == cat]
-            if not cat_entries:
-                continue
-            lines.append(f"## {cat} ({len(cat_entries)})")
-            lines.append("")
-            for e in cat_entries:
-                scope = f"slide `{e.slide_id}`" if e.slide_id else "deck-level"
-                lines.append(f"- **{scope} / {e.field}** — {e.detail}")
-            lines.append("")
-        return "\n".join(lines) + "\n"
+_patch_loss_manifest_file_key()
 
-    def to_json(self) -> dict:
-        counts = {cat.lower(): sum(1 for e in self.entries if e.category == cat)
-                  for cat in ["LOSSLESS", "LOSSY", "DROPPED", "ANNOTATED"]}
-        return {
-            "deck_title": self.deck_title,
-            "rendered_at": self.rendered_at,
-            "renderer": self.renderer,
-            "file_key": self.file_key,
-            "summary": counts,
-            "entries": [e.to_dict() for e in self.entries],
-        }
+
+def _make_manifest(*, deck_title: str, rendered_at: str,
+                   file_key: str = "") -> LossManifest:
+    return LossManifest(
+        deck_title=deck_title,
+        rendered_at=rendered_at,
+        renderer="render-figma",
+        extra={"file_key": file_key},
+    )
 
 
 # ---- Layout resolution ---------------------------------------------------
@@ -255,7 +217,7 @@ def translate(ir_path: Path, profile_path: Path) -> tuple[list[dict], LossManife
     layout_map = figma_branch.get("layout_map", {})
     file_key = figma_branch.get("file_key", "")
 
-    manifest = LossManifest(
+    manifest = _make_manifest(
         deck_title=ir.get("deck", {}).get("title", ""),
         rendered_at=dt.datetime.now().isoformat(timespec="seconds"),
         file_key=file_key,

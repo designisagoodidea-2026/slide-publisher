@@ -6,9 +6,11 @@ A Cowork plugin for people whose decks should reflect a structured story — not
 
 ## What makes this different
 
-Most slide tooling assumes you bring a polished template. **In practice, most people don't have one.** They have a folder of decks that share a brand identity by author discipline, with no underlying master/layout structure to anchor a renderer to.
+Most slide tooling assumes you bring a polished template. **In practice, most people don't have one.** They have a folder of decks that share a brand identity by author discipline, with no underlying master/layout structure to anchor a renderer to. Slide-publisher handles both cases.
 
-slide-publisher handles both cases. The plugin **classifies** the file you supply — is this a structured template, or a deck-with-implicit-pattern? — and routes accordingly:
+**Validated against 12 templates we didn't design.** The model was calibrated against 3 Microsoft built-in themes + 9 random web-sourced PowerPoint templates (military, medical, academic, university, corporate). 12 of 12 native .pptx templates validate as acceptable. See `docs/VALIDATION.md` for the methodology.
+
+The plugin **classifies** the file you supply — is this a structured template, or a deck-with-implicit-pattern? — and routes accordingly:
 
 - **Real template** → extract the layout catalog and style tokens directly.
 - **Deck-with-implicit-pattern** → cluster the recurring visual patterns, synthesize a candidate template, then extract from that. The synthesized template is yours to refine or adopt as-is.

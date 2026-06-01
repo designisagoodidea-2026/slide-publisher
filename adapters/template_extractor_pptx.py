@@ -74,12 +74,18 @@ def _infer_from_tuples(layouts: list[tuple[int, int, str]]) -> dict[str, str]:
 
 
 def extract_color_tokens(prs: "Presentation") -> dict[str, str]:
-    """Collect distinct sRGB colors from master XML, returned as named tokens.
+    """Collect color tokens. Prefer theme1.xml clrScheme; fall back to master srgbClr.
 
-    python-pptx doesn't expose theme color tokens directly, so we walk the
-    underlying OOXML and pull `<a:srgbClr>` elements. The top-N most frequent
-    colors get assigned semantic names from COLOR_TOKEN_ROLES.
+    Microsoft-themes finding: industry-standard templates carry colors in
+    `ppt/theme/theme1.xml`'s <a:clrScheme>, not as <a:srgbClr> in slideMaster.
+    Reading both gives well-built templates a fair shake.
     """
+    # First try the theme scheme (canonical Office templates land here)
+    theme_colors = _extract_theme_clrscheme(prs)
+    if theme_colors:
+        return theme_colors
+
+    # Fallback: walk master XML for srgbClr (historic v0.1 behavior)
     colors: Counter[str] = Counter()
     for master in prs.slide_masters:
         try:
@@ -97,13 +103,93 @@ def extract_color_tokens(prs: "Presentation") -> dict[str, str]:
     return tokens
 
 
-def extract_typography(prs: "Presentation") -> dict[str, dict[str, Any]]:
-    """Collect font family + size patterns from master XML, returned as named tokens.
+# Map clrScheme element names to our COLOR_TOKEN_ROLES.
+_CLRSCHEME_TO_ROLE: dict[str, str] = {
+    "dk1": "text-primary",
+    "lt1": "surface",
+    "dk2": "text-secondary",
+    "lt2": "surface-muted",
+    "accent1": "primary",
+    "accent2": "secondary",
+    "accent3": "accent",
+    "accent4": "accent-warn",
+}
 
-    We pick the most common Latin typeface and the top-N font sizes, then
-    allocate them to roles by size descending (largest = heading-1, ..., smallest
-    = caption). Weight is a heuristic: top-2 sizes get 700, rest 400.
+
+def _extract_theme_clrscheme(prs: "Presentation") -> dict[str, str]:
+    """Read theme1.xml's clrScheme. Returns role → "#RRGGBB"."""
+    out: dict[str, str] = {}
+    try:
+        # The theme XML is attached as a part to the slide master.
+        for master in prs.slide_masters:
+            theme_part = None
+            try:
+                # Walk master's part relationships for the theme part
+                for rel_id, rel in master.part.rels.items():
+                    if rel.reltype.endswith("/theme"):
+                        theme_part = rel.target_part
+                        break
+            except Exception:
+                pass
+            if theme_part is None:
+                continue
+            try:
+                theme_xml = theme_part.blob.decode("utf-8", errors="ignore")
+            except Exception:
+                continue
+            # Parse the clrScheme
+            import xml.etree.ElementTree as ET
+            try:
+                root = ET.fromstring(theme_xml)
+            except ET.ParseError:
+                continue
+            ns = {"a": "http://schemas.openxmlformats.org/drawingml/2006/main"}
+            for scheme in root.iter("{%s}clrScheme" % ns["a"]):
+                for child in scheme:
+                    tag = child.tag.split("}", 1)[-1] if "}" in child.tag else child.tag
+                    role = _CLRSCHEME_TO_ROLE.get(tag)
+                    if role is None:
+                        continue
+                    # Color may be srgbClr or sysClr (the latter has lastClr fallback)
+                    color_el = (
+                        child.find("a:srgbClr", ns)
+                        or child.find("a:sysClr", ns)
+                    )
+                    if color_el is None:
+                        continue
+                    # sysClr exposes a `lastClr` resolved hex; srgbClr exposes `val`.
+                    # Prefer the resolved hex for sysClr; fall back to `val` for srgbClr.
+                    val = color_el.get("lastClr") or color_el.get("val")
+                    if val and len(val) == 6 and all(c in "0123456789abcdefABCDEF" for c in val):
+                        out[role] = f"#{val.upper()}"
+            if out:
+                return out  # Found scheme on first master with one
+    except Exception:
+        return out
+    return out
+
+
+def extract_typography(prs: "Presentation") -> dict[str, dict[str, Any]]:
+    """Collect typography tokens. Prefer theme1.xml fontScheme; fall back to master.
+
+    Microsoft-themes finding: industry templates declare typography via
+    theme1.xml's fontScheme (majorFont/minorFont), not as inline <a:rPr>
+    sizes on the master. Read the scheme first.
     """
+    # First try the theme scheme — yields a 2-tier display/body model
+    scheme = _extract_theme_fontscheme(prs)
+    if scheme:
+        major = scheme.get("major", "Calibri Light")
+        minor = scheme.get("minor", "Calibri")
+        return {
+            "display": {"family": major, "size_pt": 40.0, "weight": 700},
+            "heading-1": {"family": major, "size_pt": 28.0, "weight": 700},
+            "heading-2": {"family": major, "size_pt": 22.0, "weight": 600},
+            "body": {"family": minor, "size_pt": 18.0, "weight": 400},
+            "caption": {"family": minor, "size_pt": 12.0, "weight": 400},
+        }
+
+    # Fallback: master XML inspection (historic v0.1 behavior)
     fonts: Counter[str] = Counter()
     sizes: Counter[int] = Counter()
     for master in prs.slide_masters:
@@ -113,11 +199,9 @@ def extract_typography(prs: "Presentation") -> dict[str, dict[str, Any]]:
                 if tag == "rPr":
                     sz = el.get("sz")
                     if sz and sz.isdigit():
-                        # pptx font sizes are in hundredths of a point
                         sizes[int(sz) // 100] += 1
                 elif tag == "latin":
                     tf = el.get("typeface")
-                    # Skip theme placeholders like +mn-lt, +mj-lt
                     if tf and not tf.startswith("+"):
                         fonts[tf] += 1
         except Exception:
@@ -136,6 +220,44 @@ def extract_typography(prs: "Presentation") -> dict[str, dict[str, Any]]:
             "weight": 700 if i < 2 else 400,
         }
     return typography
+
+
+def _extract_theme_fontscheme(prs: "Presentation") -> dict[str, str]:
+    """Read theme1.xml's fontScheme. Returns {major, minor} typeface names."""
+    out: dict[str, str] = {}
+    try:
+        for master in prs.slide_masters:
+            theme_part = None
+            try:
+                for rel_id, rel in master.part.rels.items():
+                    if rel.reltype.endswith("/theme"):
+                        theme_part = rel.target_part
+                        break
+            except Exception:
+                continue
+            if theme_part is None:
+                continue
+            try:
+                theme_xml = theme_part.blob.decode("utf-8", errors="ignore")
+            except Exception:
+                continue
+            import xml.etree.ElementTree as ET
+            try:
+                root = ET.fromstring(theme_xml)
+            except ET.ParseError:
+                continue
+            ns = {"a": "http://schemas.openxmlformats.org/drawingml/2006/main"}
+            for tier in ("major", "minor"):
+                font_el = root.find(f".//a:fontScheme/a:{tier}Font/a:latin", ns)
+                if font_el is not None:
+                    tf = font_el.get("typeface")
+                    if tf:
+                        out[tier] = tf
+            if out:
+                return out
+    except Exception:
+        return out
+    return out
 
 
 def compute_quality_score(

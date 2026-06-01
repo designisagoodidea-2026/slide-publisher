@@ -51,76 +51,65 @@ except ImportError:
 
 
 # ---------------------------------------------------------------------------
-# Loss manifest
+# Loss manifest — uses _common.LossManifest with format-specific `extra`
 # ---------------------------------------------------------------------------
 
-@dataclass
-class LossEntry:
-    category: str          # LOSSLESS | LOSSY | DROPPED | ANNOTATED
-    slide_id: str | None   # which slide it applies to (None = deck-level)
-    field: str             # what part of the IR (e.g., "layout_intent", "body_blocks[2].kind")
-    detail: str            # human-readable description
+sys.path.insert(0, str(Path(__file__).parent))
+from _common import LossManifest, LossEntry, LAYOUT_FALLBACKS as _COMMON_FALLBACKS  # noqa: E402
 
-    def to_dict(self) -> dict:
-        return {
-            "category": self.category,
-            "slide_id": self.slide_id,
-            "field": self.field,
-            "detail": self.detail,
-        }
+# Stub out the legacy class block so the remaining adapter code (which uses
+# LossManifest with template_path) keeps working. We map template_path → extra.
+_LEGACY_KEEP_FOR_CODE_BELOW = True
+if False:
+    @dataclass
+    class _LossEntry:  # unreachable; preserved for reader navigation
+        category: str
+        slide_id: str | None
+        field: str
+        detail: str
+
+        def to_dict(self) -> dict:
+            return {
+                "category": self.category,
+                "slide_id": self.slide_id,
+                "field": self.field,
+                "detail": self.detail,
+            }
 
 
-@dataclass
-class LossManifest:
-    deck_title: str = ""
-    rendered_at: str = ""
-    renderer: str = "render-pptx"
-    template_path: str = ""
-    entries: list[LossEntry] = field(default_factory=list)
+# Shim: existing code constructs LossManifest with `template_path=`; route
+# that into the shared dataclass's `extra` dict.
+def _make_manifest(*, deck_title: str, rendered_at: str,
+                   template_path: str = "") -> LossManifest:
+    return LossManifest(
+        deck_title=deck_title,
+        rendered_at=rendered_at,
+        renderer="render-pptx",
+        extra={"template_path": template_path},
+    )
 
-    def add(self, category: str, slide_id: str | None, field_name: str, detail: str) -> None:
-        self.entries.append(LossEntry(category, slide_id, field_name, detail))
 
-    def to_markdown(self) -> str:
-        lines = [
-            f"# Loss manifest — {self.deck_title}",
-            "",
-            f"- Rendered: {self.rendered_at}",
-            f"- Renderer: `{self.renderer}`",
-            f"- Template: `{self.template_path}`",
-            "",
-        ]
-        for cat in ["LOSSLESS", "LOSSY", "DROPPED", "ANNOTATED"]:
-            cat_entries = [e for e in self.entries if e.category == cat]
-            if not cat_entries:
-                continue
-            lines.append(f"## {cat} ({len(cat_entries)})")
-            lines.append("")
-            for e in cat_entries:
-                scope = f"slide `{e.slide_id}`" if e.slide_id else "deck-level"
-                lines.append(f"- **{scope} / {e.field}** — {e.detail}")
-            lines.append("")
-        # Summary at top of file
-        summary_block = self._summary_block()
-        return summary_block + "\n".join(lines) + "\n"
+# Provide attribute access shim so legacy `manifest.template_path` reads work
+def _patch_loss_manifest_template_path() -> None:
+    def _get(self):  # type: ignore
+        return self.extra.get("template_path", "")
+    def _set(self, value):  # type: ignore
+        self.extra["template_path"] = value
+    if not hasattr(LossManifest, "template_path"):
+        LossManifest.template_path = property(_get, _set)  # type: ignore
 
-    def _summary_block(self) -> str:
-        counts = {cat: sum(1 for e in self.entries if e.category == cat)
-                  for cat in ["LOSSLESS", "LOSSY", "DROPPED", "ANNOTATED"]}
-        return (
-            f"> Summary: {counts['LOSSLESS']} lossless, {counts['LOSSY']} lossy, "
-            f"{counts['DROPPED']} dropped, {counts['ANNOTATED']} annotated.\n\n"
-        )
 
-    def to_json(self) -> dict:
-        counts = {cat.lower(): sum(1 for e in self.entries if e.category == cat)
-                  for cat in ["LOSSLESS", "LOSSY", "DROPPED", "ANNOTATED"]}
-        return {
+_patch_loss_manifest_template_path()
+
+
+def _legacy_loss_to_json_with_template(self) -> dict:  # noqa
+    """Preserved here as documentation of the legacy shape; not used."""
+    return {
             "deck_title": self.deck_title,
             "rendered_at": self.rendered_at,
             "renderer": self.renderer,
             "template_path": self.template_path,
-            "summary": counts,
+            "summary": self.counts(),
             "entries": [e.to_dict() for e in self.entries],
         }
 
@@ -390,7 +379,7 @@ def render(ir_path: Path, profile_path: Path, out_path: Path) -> LossManifest:
     template_path_str = str(Path(pptx_branch["path"]).expanduser())
     layout_map = pptx_branch.get("layout_map", {})
 
-    manifest = LossManifest(
+    manifest = _make_manifest(
         deck_title=ir.get("deck", {}).get("title", ""),
         rendered_at=dt.datetime.now().isoformat(timespec="seconds"),
         template_path=template_path_str,

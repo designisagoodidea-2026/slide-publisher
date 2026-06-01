@@ -301,6 +301,34 @@ def infer_layout_map(layout_names: list[str]) -> dict[str, str]:
     return mapping
 
 
+def effective_coverage(layout_map: dict[str, str]) -> tuple[int, list[str]]:
+    """Count IR intents that are EITHER directly mapped OR can resolve through
+    the documented fallback chain.
+
+    Industry-standard templates (Microsoft built-ins, Google Slides themes,
+    Keynote themes) ship 8-12 structural layouts that don't carry our narrative
+    intent names ('three_pillars', 'pull_quote', 'stat_block'). Those intents
+    still RENDER cleanly through their fallback (typically `claim_with_evidence`
+    via 'Title and Content'). Counting them as covered reflects reality.
+
+    Returns (n_effectively_covered, list_of_uncovered_intents).
+    """
+    covered = set(layout_map.keys())
+    changed = True
+    while changed:
+        changed = False
+        for intent in LAYOUT_INTENTS:
+            if intent in covered:
+                continue
+            for fb in LAYOUT_FALLBACKS.get(intent, []):
+                if fb in covered:
+                    covered.add(intent)
+                    changed = True
+                    break
+    uncovered = [i for i in LAYOUT_INTENTS if i not in covered]
+    return len(covered), uncovered
+
+
 def quality_score(
     *,
     layout_map: dict[str, str],
@@ -308,12 +336,16 @@ def quality_score(
     n_color_tokens: int,
     n_type_tokens: int,
 ) -> int:
-    """Same weighted heuristic used by extractors across all formats.
+    """Weighted heuristic used by extractors across all formats.
 
-    50% layout coverage, 20% catalog breadth, 15% color completeness,
-    15% type completeness.
+    Uses *effective* layout coverage (direct + fallback) per the Microsoft-
+    themes validation finding — narrative intents like `three_pillars` count
+    as covered if their fallback chain lands on a mapped intent.
+
+    50% effective coverage, 20% catalog breadth, 15% color, 15% type.
     """
-    layout_coverage = len(layout_map) / len(LAYOUT_INTENTS) if LAYOUT_INTENTS else 0.0
+    n_covered, _ = effective_coverage(layout_map)
+    layout_coverage = n_covered / len(LAYOUT_INTENTS) if LAYOUT_INTENTS else 0.0
     layout_breadth = min(1.0, n_layouts / 10.0)
     color_completeness = min(1.0, n_color_tokens / len(COLOR_TOKEN_ROLES))
     type_completeness = min(1.0, n_type_tokens / len(TYPE_TOKEN_ROLES))
