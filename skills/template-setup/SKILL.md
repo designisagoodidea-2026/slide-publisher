@@ -43,20 +43,46 @@ Validate accessibility:
 
 If validation fails, surface the specific error and re-prompt for a corrected source.
 
-### Step 3 — Extraction *(skip if user supplied an existing template)*
+### Step 3 — Classification, extraction, OR synthesis *(branches on classifier verdict)*
 
-For each source, invoke the per-format extractor sub-skill:
+First, **classify the source.** For each input, invoke `template-classifier`:
 
-- pptx → `template-extractor-pptx`.
-- figma → `template-extractor-figma`.
+- pptx → `python adapters/template_classifier.py <path>`
+- figma → MCP Plugin API recipe (see `template-classifier/SKILL.md` § "Figma classification")
 
-Each extractor emits a candidate template profile entry (layout_map, style_tokens, quality_score, findings). Surface the findings to the user, but don't ask for confirmation yet — extraction output feeds into validation.
+The classifier returns `template | deck-with-implicit-pattern | mixed` + confidence + diagnostic signals. **Always surface the diagnosis to the user verbatim** — this is the value-add of detection.
+
+Then branch:
+
+#### Branch A: `template` verdict (user has a real template)
+
+Invoke `template-extractor-<format>` directly on the source. Skip synthesis. Continue to Step 4.
+
+#### Branch B: `deck-with-implicit-pattern` verdict (user has a deck, no template)
+
+This is the differentiated case. Don't extract from the loose deck — the result would be near-empty and confuse the user. Instead:
+
+1. **Tell the user what was detected.** E.g., "Your file has 8 slides across 4 visual patterns, but no structured template. I'll synthesize a candidate template by clustering the recurring patterns."
+2. **Ask permission to synthesize.** For pptx this writes a new file; for figma this writes to the user's existing file (with a new "Templates" page). Get explicit consent.
+3. **Invoke `template-synthesizer-<format>`.** The synthesizer produces:
+   - For pptx: a new `.pptx` with cluster-derived layout names + a JSON report of canonical patterns and extracted tokens.
+   - For figma: an MCP-driven creation plan + a new "Templates" page in the user's file with synthesized frames.
+4. **Show the user the cluster summary.** E.g., "Detected 4 patterns: Title Slide (2 slides), Three Column (2 slides), Stat Block (2 slides), Pull Quote (2 slides). Adopt this template? [y / iterate / cancel]"
+5. **On accept, invoke `template-extractor-<format>` on the synthesized output.** This produces the candidate profile entry. Continue to Step 4.
+
+#### Branch C: `mixed` verdict (partial template, partial freeform)
+
+Surface both options to the user:
+
+> "Your file has some template structure (e.g., 4 layouts in use across 12 slides) but also significant freeform content. You can either (a) treat it as a template and use what's there (some intents may be missing), or (b) synthesize a fresh template from all the patterns I detected. Which do you prefer?"
+
+Branch on their answer. Continue to Step 4 either way.
 
 ### Step 4 — Validation
 
-Run `template-validator` against the candidate (synthesized) or supplied template. The validator returns a structured findings report with green / yellow / red severities.
+Run `template-validator` against the candidate profile entry (extracted or extracted-after-synthesis). The validator returns a structured findings report with green / yellow / red severities across 6 criteria.
 
-In v0.2, the validator implementation is full. In v0.1, the validator may be stubbed for some checks; the extractor's `_findings` are the primary signal.
+Surface findings to the user alongside the classifier's diagnosis (if synthesis ran) and the synthesizer's notes (if applicable). Together these form the quality picture.
 
 ### Step 5 — Quality report
 
@@ -158,7 +184,9 @@ This skill ships in the public, anonymous plugin. No user data is hard-coded. Th
 
 ## Composition with other skills
 
-- `template-extractor-pptx`, `template-extractor-figma` — sub-skills invoked during Step 3.
+- `template-classifier` — sub-skill invoked at Step 3 (always, before any extraction or synthesis). Routes the orchestrator into Branch A / B / C.
+- `template-synthesizer-pptx`, `template-synthesizer-figma` — sub-skills invoked when the classifier verdict is `deck-with-implicit-pattern` (Branch B). They produce a synthesized template; the extractor then runs against that.
+- `template-extractor-pptx`, `template-extractor-figma` — sub-skills invoked during Step 3 (after classification, and after synthesis on Branch B).
 - `template-validator` — sub-skill invoked during Step 4.
 - `slide-ir-validator` — not used by setup. Runs at compile time / render time.
 - `story-compiler` — not used by setup. Setup is a prerequisite, not a consumer.

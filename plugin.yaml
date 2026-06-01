@@ -17,17 +17,21 @@ requires:
   python: ">=3.10"
 
 skills:
-  # v0.1 — eight skills
-  - template-setup            # one-time install wizard; produces the template profile
-  - template-validator        # structural quality check; green/yellow/red findings
-  - template-extractor-pptx   # loose .pptx deck → synthesized template
-  - template-extractor-figma  # loose Figma deck → synthesized template
-  - story-compiler            # outline-mode input → IR
-  - slide-ir-validator        # validates an IR against schema + lint rules
-  - render-pptx               # IR + template profile → .pptx (via global pptx skill)
-  - render-figma              # IR + template profile → Figma Slides
+  # v0.1 — eleven skills
+  - template-setup              # one-time install wizard; produces the template profile
+  - template-classifier         # detects template vs. deck-with-implicit-pattern
+  - template-synthesizer-pptx   # deck-with-implicit-pattern → synthesized .pptx template
+  - template-synthesizer-figma  # deck-with-implicit-pattern → synthesized Figma templates
+  - template-extractor-pptx     # template .pptx → profile entry
+  - template-extractor-figma    # template Figma file → profile entry
+  - template-validator          # structural quality check; green/yellow/red findings
+  - story-compiler              # outline-mode input → IR
+  - slide-ir-validator          # validates an IR against schema + lint rules
+  - render-pptx                 # IR + template profile → .pptx (via global pptx skill)
+  - render-figma                # IR + template profile → Figma Slides
   # v0.2 (stubs only in v0.1)
   # - template-extractor-gslides
+  # - template-synthesizer-gslides
   # - render-gslides
 
 mcps:
