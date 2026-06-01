@@ -91,15 +91,10 @@ from pathlib import Path
 from typing import Any
 
 
-# Position quantization — 16 pixel grid is forgiving enough for Figma drift.
-POSITION_QUANTUM_PX = 16
-FONT_SIZE_QUANTUM = 4
-
-
-def _q(val: float | int | None, q: int) -> int:
-    if val is None:
-        return 0
-    return int(round(val / q) * q)
+from _common import (  # noqa: E402
+    POSITION_QUANTUM_PX, FONT_SIZE_QUANTUM_PT as FONT_SIZE_QUANTUM,
+    quantize as _q,
+)
 
 
 def profile_shape(shape: dict) -> tuple:

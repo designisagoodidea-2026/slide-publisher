@@ -1,0 +1,20 @@
+profile_version: 1.0.0
+preferred_output: pptx
+templates:
+  pptx:
+    path: /sessions/jolly-nifty-cori/mnt/Slide Publisher/plugin/tests/fixtures/synthetic-template.pptx
+    layout_map:
+      title: Title Slide
+      section_break: Section Header
+      claim_with_evidence: Title and Content
+      three_pillars: Three Column
+      comparison: Comparison
+      quote: Pull Quote
+      image_with_caption: Image and Caption
+      metrics: Stat Block
+      timeline: Timeline
+      callout: Big Statement
+    quality_score: 70
+style_tokens: {}
+setup_completed: '2026-06-01'
+setup_version: 0.1.0-pre

@@ -119,9 +119,10 @@ These are scoped, deliberate v0.1 simplifications — not bugs. Document them up
 - Not a brand designer. Tokens reflect what the source deck uses; the synthesizer doesn't optimize colors for accessibility or recommend palette changes.
 - Not a Figma synthesizer. See `template-synthesizer-figma`.
 
-## Anonymity (plugin policy)
+## Anonymity
 
-This skill ships in the public plugin. Heuristic rules and naming conventions are generic. No organization defaults, no proprietary patterns.
+See [`docs/ANONYMITY-NOTE.md`](../../docs/ANONYMITY-NOTE.md).
+
 
 ## Composition with other skills
 

@@ -134,11 +134,10 @@ Refuse to draft, and ask, when:
 
 Don't refuse on missing arc — infer it and confirm. Don't refuse on missing duration — default to 15 minutes and flag.
 
-## Anonymity (plugin policy)
+## Anonymity
 
-This skill is in a public, anonymous plugin. The compiler must not bundle, suggest, or default to any specific user's voice profile. The IR's `voice_constraints` field is a pointer the user supplies; the skill should mention it as available but not populate it with anything. If the user supplies a voice spec at compile time, pass the reference through; do not embed the spec's content into the IR.
+See [`docs/ANONYMITY-NOTE.md`](../../docs/ANONYMITY-NOTE.md).
 
-Generated example content must be generic — no real-org names, no real people, no proprietary details — unless the user is *clearly* working on their own private deck and explicitly invokes content from a named source they themselves authored.
 
 ## Examples
 

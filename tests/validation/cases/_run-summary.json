@@ -1,0 +1,146 @@
+{
+  "cases": [
+    {
+      "case": "case-01-well-formed-template",
+      "stages": {
+        "classifier": {
+          "exit": 0
+        },
+        "synthesizer": {
+          "skipped": "classification != deck-with-implicit-pattern"
+        },
+        "extractor": {
+          "exit": 0,
+          "target": "/sessions/jolly-nifty-cori/mnt/Slide Publisher/plugin/tests/validation/cases/case-01-well-formed-template/input.pptx"
+        },
+        "validator": {
+          "exit": 1
+        },
+        "remediator": {
+          "exit": 0
+        },
+        "renderer": {
+          "exit": 0
+        }
+      }
+    },
+    {
+      "case": "case-02-weak-template",
+      "stages": {
+        "classifier": {
+          "exit": 0
+        },
+        "synthesizer": {
+          "skipped": "classification != deck-with-implicit-pattern"
+        },
+        "extractor": {
+          "exit": 0,
+          "target": "/sessions/jolly-nifty-cori/mnt/Slide Publisher/plugin/tests/validation/cases/case-02-weak-template/input.pptx"
+        },
+        "validator": {
+          "exit": 1
+        },
+        "remediator": {
+          "exit": 0
+        },
+        "renderer": {
+          "exit": 0
+        }
+      }
+    },
+    {
+      "case": "case-03-canonical-deck",
+      "stages": {
+        "classifier": {
+          "exit": 0
+        },
+        "synthesizer": {
+          "exit": 0
+        },
+        "extractor": {
+          "exit": 0,
+          "target": "/sessions/jolly-nifty-cori/mnt/Slide Publisher/plugin/tests/validation/cases/case-03-canonical-deck/S-synthesized.pptx"
+        },
+        "validator": {
+          "exit": 1
+        },
+        "remediator": {
+          "exit": 0
+        },
+        "renderer": {
+          "exit": 0
+        }
+      }
+    },
+    {
+      "case": "case-05-mixed",
+      "stages": {
+        "classifier": {
+          "exit": 0
+        },
+        "synthesizer": {
+          "skipped": "classification != deck-with-implicit-pattern"
+        },
+        "extractor": {
+          "exit": 0,
+          "target": "/sessions/jolly-nifty-cori/mnt/Slide Publisher/plugin/tests/validation/cases/case-05-mixed/input.pptx"
+        },
+        "validator": {
+          "exit": 1
+        },
+        "remediator": {
+          "exit": 0
+        },
+        "renderer": {
+          "exit": 0
+        }
+      }
+    },
+    {
+      "case": "case-06-empty-template",
+      "stages": {
+        "classifier": {
+          "exit": 0
+        },
+        "synthesizer": {
+          "skipped": "classification != deck-with-implicit-pattern"
+        },
+        "extractor": {
+          "exit": 0,
+          "target": "/sessions/jolly-nifty-cori/mnt/Slide Publisher/plugin/tests/validation/cases/case-06-empty-template/input.pptx"
+        },
+        "validator": {
+          "exit": 1
+        },
+        "remediator": {
+          "exit": 0
+        },
+        "renderer": {
+          "exit": 0
+        }
+      }
+    },
+    {
+      "case": "case-07-minimal-ir",
+      "stages": {
+        "validator": {
+          "schema_valid": true
+        },
+        "renderer": {
+          "exit": 0
+        }
+      }
+    },
+    {
+      "case": "case-08-invalid-ir",
+      "stages": {
+        "validator": {
+          "schema_valid": false
+        },
+        "renderer": {
+          "skipped": "IR failed schema; renderer would refuse"
+        }
+      }
+    }
+  ]
+}

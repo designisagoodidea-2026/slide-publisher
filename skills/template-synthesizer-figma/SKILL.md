@@ -193,9 +193,10 @@ async function createTemplates(plan) {
 - Not a pptx synthesizer. See `template-synthesizer-pptx`.
 - Not a layout designer. The synthesizer detects existing patterns; it doesn't invent layouts the source doesn't exhibit.
 
-## Anonymity (plugin policy)
+## Anonymity
 
-This skill ships in the public plugin. Heuristic rules and naming conventions are generic. Output reflects the user's input file only. The new templates the skill creates live in the user's own Figma file under their own permissions.
+See [`docs/ANONYMITY-NOTE.md`](../../docs/ANONYMITY-NOTE.md).
+
 
 ## Composition with other skills
 

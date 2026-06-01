@@ -17,7 +17,7 @@ requires:
   python: ">=3.10"
 
 skills:
-  # v0.1 — eleven skills
+  # v0.1 — eighteen skills
   - template-setup              # one-time install wizard; produces the template profile
   - template-classifier         # detects template vs. deck-with-implicit-pattern
   - template-synthesizer-pptx   # deck-with-implicit-pattern → synthesized .pptx template
@@ -25,10 +25,17 @@ skills:
   - template-extractor-pptx     # template .pptx → profile entry
   - template-extractor-figma    # template Figma file → profile entry
   - template-validator          # structural quality check; green/yellow/red findings
+  - remediation-apply-pptx      # auto-fix a failing pptx template (layout rename + recommendations)
+  - remediation-apply-figma     # auto-fix a failing figma template via MCP
   - story-compiler              # outline-mode input → IR
   - slide-ir-validator          # validates an IR against schema + lint rules
-  - render-pptx                 # IR + template profile → .pptx (via global pptx skill)
+  - render-pptx                 # IR + template profile → .pptx
   - render-figma                # IR + template profile → Figma Slides
+  - input-pdf                   # accept PDF (URL or path) as a deck source
+  - input-png                   # accept PNG screenshots as a deck source
+  - input-ppt                   # convert legacy .ppt → .pptx via LibreOffice
+  - visual-diff                 # per-slide phash + SSIM, HTML side-by-side report
+  - iterate-to-parity           # render→diff→adjust loop until visual convergence
   # v0.2 (stubs only in v0.1)
   # - template-extractor-gslides
   # - template-synthesizer-gslides

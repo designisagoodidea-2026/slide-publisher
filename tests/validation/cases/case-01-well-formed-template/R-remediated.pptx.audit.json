@@ -1,0 +1,51 @@
+{
+  "template_path": "/sessions/jolly-nifty-cori/mnt/Slide Publisher/plugin/tests/validation/cases/case-01-well-formed-template/input.pptx",
+  "out_path": "/sessions/jolly-nifty-cori/mnt/Slide Publisher/plugin/tests/validation/cases/case-01-well-formed-template/R-remediated.pptx",
+  "remediated_at": "2026-06-01T22:26:43",
+  "pre_verdict": "fail",
+  "post_verdict": "fail",
+  "summary": {
+    "total_fixes": 2,
+    "by_type": {
+      "color_palette_recommended": 1,
+      "typeface_recommended": 1
+    },
+    "by_severity": {
+      "color_tokens": 1,
+      "type_tokens": 1
+    }
+  },
+  "entries": [
+    {
+      "fix_type": "color_palette_recommended",
+      "target": "theme.colors",
+      "before": "(empty)",
+      "after": {
+        "primary": "#1F2A44",
+        "secondary": "#3F6AB1",
+        "accent": "#E2A03F",
+        "text-primary": "#111418",
+        "text-secondary": "#5B6470",
+        "surface": "#FFFFFF",
+        "surface-muted": "#F4F5F8"
+      },
+      "rationale": "Validator flagged 0 explicit color tokens. v0.1 doesn't auto-edit theme XML (risk of corrupting the file); instead recommends this default palette. Apply via PowerPoint \u2192 View \u2192 Slide Master \u2192 Colors \u2192 Customize Colors.",
+      "severity_addressed": "color_tokens"
+    },
+    {
+      "fix_type": "typeface_recommended",
+      "target": "master.fonts",
+      "before": "(empty)",
+      "after": {
+        "display_and_body": "Inter"
+      },
+      "rationale": "Validator flagged 0 named typefaces. v0.1 doesn't auto-edit theme XML; recommends 'Inter' as the body/display family. Apply via PowerPoint \u2192 View \u2192 Slide Master \u2192 Fonts \u2192 Customize Fonts.",
+      "severity_addressed": "type_tokens"
+    }
+  ],
+  "deferred": [
+    "color_tokens: Default palette recommended in audit; user applies via Slide Master view.",
+    "type_tokens: Recommended typeface 'Inter'; user applies via Slide Master view.",
+    "style_hierarchy: Adding distinct font-size tiers requires Slide Master XML edits; v0.1 deferred. Apply via PowerPoint \u2192 View \u2192 Slide Master and define explicit sizes for heading-1/2/3, body, caption."
+  ]
+}

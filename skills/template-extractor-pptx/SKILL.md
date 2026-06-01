@@ -109,8 +109,7 @@ When invoked as a sub-skill from `template-setup`:
 - Not a renderer. The adapter does not touch the user's deck content; it only inspects the master/layout structure.
 - Not a Figma extractor. Figma has its own adapter and skill.
 
-## Anonymity (plugin policy)
+## Anonymity
 
-This skill ships in the public, anonymous plugin. The adapter contains no hard-coded organization mappings, no proprietary patterns, no user-specific defaults. The pattern dictionary is generic. The default token role names (`primary`, `body`, etc.) are universal.
+See [`docs/ANONYMITY-NOTE.md`](../../docs/ANONYMITY-NOTE.md).
 
-The script's output reflects the user's input only — running it on `their_template.pptx` produces values derived from that file. No outbound network calls.

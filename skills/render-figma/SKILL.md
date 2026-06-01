@@ -160,9 +160,10 @@ For a typical IR + well-fitting Figma template, expect:
 - Not a content generator. The IR is the source of truth.
 - Not the figma-extractor. See `template-extractor-figma` for inspection.
 
-## Anonymity (plugin policy)
+## Anonymity
 
-This skill ships in the public plugin. The adapter uses no organization-specific patterns. The 8 Plugin API rules are derived from generally-applicable Figma MCP behavior. The user supplies their own Figma file key, their own MCP credentials, their own template.
+See [`docs/ANONYMITY-NOTE.md`](../../docs/ANONYMITY-NOTE.md).
+
 
 ## Composition with other skills
 

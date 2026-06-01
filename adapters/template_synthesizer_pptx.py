@@ -35,6 +35,14 @@ from dataclasses import dataclass, field, asdict
 from pathlib import Path
 from typing import Any
 
+sys.path.insert(0, str(Path(__file__).parent))
+from _common import (  # noqa: E402
+    LAYOUT_INTENTS, COLOR_TOKEN_ROLES, TYPE_TOKEN_ROLES,
+    POSITION_QUANTUM_EMU as POSITION_QUANTUM,
+    FONT_SIZE_QUANTUM_PT as FONT_SIZE_QUANTUM,
+    quantize as _quantize, derive_layout_name, suggest_intent_from_name,
+)
+
 try:
     from pptx import Presentation
     from pptx.util import Emu, Pt
@@ -42,20 +50,6 @@ except ImportError:
     print("ERROR: python-pptx is not installed. Install with: "
           "pip install python-pptx", file=sys.stderr)
     sys.exit(2)
-
-
-# Position quantization granularity (in EMUs — 914400 EMU = 1 inch).
-# Half-inch grid is coarse enough to forgive small position drift.
-POSITION_QUANTUM = 457200  # 0.5 inch in EMUs
-
-# Font-size quantization (pt) — group nearby sizes together.
-FONT_SIZE_QUANTUM = 4
-
-
-def _quantize(val: int | float | None, q: int) -> int:
-    if val is None:
-        return 0
-    return int(round(val / q) * q)
 
 
 @dataclass
@@ -179,7 +173,7 @@ def cluster_slides(profiles: list[SlideProfile]) -> list[Cluster]:
     for cid, (key, members) in enumerate(groups.items()):
         shapes = canonical[key]
         name = _derive_layout_name(shapes)
-        intent = _suggest_intent(name, shapes)
+        intent = suggest_intent_from_name(name)
         clusters.append(Cluster(
             cluster_id=cid,
             derived_name=name,
@@ -191,71 +185,18 @@ def cluster_slides(profiles: list[SlideProfile]) -> list[Cluster]:
 
 
 def _derive_layout_name(shapes: list[ShapeProfile]) -> str:
-    """Heuristic naming based on shape count, position, and font sizes."""
+    """Bridge to the shared derive_layout_name with this file's shape type."""
     n_text = sum(1 for s in shapes if s.kind == "text")
     n_image = sum(1 for s in shapes if s.kind == "image")
-    if not shapes:
-        return "Blank Layout"
-
-    # Inspect text shape font sizes (largest first)
-    text_sizes = sorted([s.dominant_font_pt for s in shapes if s.kind == "text"],
-                       reverse=True)
-    largest = text_sizes[0] if text_sizes else 0
-
-    # 1 big text + 1 small. Order matters — check huge-font cases first.
-    if n_text == 2 and n_image == 0:
-        if largest >= 80:
-            # Huge-font slides are metric/big-statement layouts, not titles.
-            return "Stat Block"
-        if largest >= 40 and text_sizes[1] <= 24:
-            return "Title Slide"
-        if largest >= 24 and text_sizes[1] <= 16:
-            return "Pull Quote"
-
-    # Header + 3 columns of text → Three Column
-    if n_text == 4 and n_image == 0:
-        # Top shape is the header, 3 below are columns
-        cols = shapes[-3:]
-        # If the 3 columns have similar widths, classify as Three Column
-        widths = sorted({s.width for s in cols})
-        if len(widths) <= 2:
-            return "Three Column"
-
-    # 1 huge number + 1 small label → Stat Block / Metric
-    if n_text == 2 and largest >= 80:
-        return "Stat Block"
-
-    # Single text shape → Section Header
-    if n_text == 1 and n_image == 0:
-        return "Section Header"
-
-    # Image-heavy
-    if n_image >= 1 and n_text <= 2:
-        return "Image and Caption"
-
-    return f"Custom Layout (n_text={n_text}, n_image={n_image})"
+    sizes = sorted([s.dominant_font_pt for s in shapes if s.kind == "text"],
+                   reverse=True)
+    return derive_layout_name(
+        n_text_shapes=n_text, n_image_shapes=n_image, font_sizes_desc=sizes,
+    )
 
 
 def _suggest_intent(layout_name: str, shapes: list[ShapeProfile]) -> str:
-    """Map the derived layout name to an IR intent."""
-    name = layout_name.lower()
-    if "title slide" in name:
-        return "title"
-    if "section" in name:
-        return "section_break"
-    if "three" in name or "column" in name:
-        return "three_pillars"
-    if "quote" in name:
-        return "quote"
-    if "stat" in name or "metric" in name or "big statement" in name:
-        return "metrics" if "stat" in name or "metric" in name else "callout"
-    if "image" in name or "picture" in name:
-        return "image_with_caption"
-    if "compar" in name:
-        return "comparison"
-    if "timeline" in name:
-        return "timeline"
-    return "claim_with_evidence"  # universal default
+    return suggest_intent_from_name(layout_name)
 
 
 def extract_global_tokens(profiles: list[SlideProfile]) -> dict[str, Any]:

@@ -1,0 +1,18 @@
+{
+  "format": "pptx",
+  "classification": "mixed",
+  "confidence": 0.0,
+  "signals": {
+    "n_slides": 0,
+    "n_layouts_available": 11,
+    "n_layouts_used": 0,
+    "layout_diversity_ratio": 0.0,
+    "default_layout_ratio": 0.0,
+    "direct_overrides_estimate": 0,
+    "direct_overrides_per_slide": 0.0,
+    "layout_name_semantic_richness": 0.0
+  },
+  "diagnosis": [
+    "File has no slides; cannot classify. Likely an empty template shell \u2014 treat as 'template' for downstream extractor or have the user supply a populated file."
+  ]
+}

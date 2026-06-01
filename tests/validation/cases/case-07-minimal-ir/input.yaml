@@ -1,0 +1,29 @@
+# Minimal IR — 3 slides, all required fields present, all optional fields omitted.
+# Tests renderer robustness on a slim input.
+
+ir_version: "1.0.0"
+
+deck:
+  title: "Three-slide deck"
+  audience:
+    primary: "Internal team"
+    prior_knowledge: warm
+  throughline: "We can ship a 3-slide deck with this IR."
+  arc: situation-first
+  evidence_anchor: hybrid
+
+slides:
+  - id: title
+    beat: hook
+    layout_intent: title
+    title: "Three-slide deck"
+
+  - id: middle
+    beat: claim
+    layout_intent: claim_with_evidence
+    title: "The middle"
+
+  - id: end
+    beat: next
+    layout_intent: callout
+    title: "Next steps"

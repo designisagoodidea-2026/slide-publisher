@@ -1,0 +1,53 @@
+{
+  "format": "pptx",
+  "verdict": "fail",
+  "summary": {
+    "green": 3,
+    "yellow": 1,
+    "red": 2
+  },
+  "findings": [
+    {
+      "criterion": "layout_catalog_completeness",
+      "severity": "green",
+      "value": "10/10",
+      "message": "10 of 10 IR layout intents have a matching pptx layout.",
+      "remediation": null
+    },
+    {
+      "criterion": "style_hierarchy",
+      "severity": "red",
+      "value": 0,
+      "message": "0 distinct font size levels found in the slide master(s) (heading-1, body, caption tiers, etc.).",
+      "remediation": "Define explicit font-size tokens for heading, body, and caption tiers in the slide master. Without a hierarchy, renderers can't infer emphasis from the IR's beat structure."
+    },
+    {
+      "criterion": "master_usage",
+      "severity": "green",
+      "value": 1,
+      "message": "1 slide master in this template.",
+      "remediation": null
+    },
+    {
+      "criterion": "color_tokens",
+      "severity": "red",
+      "value": 0,
+      "message": "0 explicit color(s) defined in master XML. (Note: theme colors aren't counted here \u2014 they may inflate the effective palette beyond this number.)",
+      "remediation": "Define brand colors as explicit tokens in your theme or master. Scattered hex values across slides make consistent rendering hard."
+    },
+    {
+      "criterion": "type_tokens",
+      "severity": "yellow",
+      "value": 0,
+      "message": "0 typeface(s) explicitly named in master XML. (theme-only typography)",
+      "remediation": "Pick 1-2 typefaces (display + body) and define them as tokens. >3 typefaces creates visual noise."
+    },
+    {
+      "criterion": "orphan_elements",
+      "severity": "green",
+      "value": "1 of 11",
+      "message": "1 layout(s) in the template don't map to any IR intent: Vertical Title and Text",
+      "remediation": null
+    }
+  ]
+}

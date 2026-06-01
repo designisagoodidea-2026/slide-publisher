@@ -1,0 +1,21 @@
+{
+  "format": "pptx",
+  "classification": "mixed",
+  "confidence": 0.29,
+  "signals": {
+    "n_slides": 4,
+    "n_layouts_available": 11,
+    "n_layouts_used": 3,
+    "layout_diversity_ratio": 0.75,
+    "default_layout_ratio": 0.75,
+    "direct_overrides_estimate": 0,
+    "direct_overrides_per_slide": 0.0,
+    "layout_name_semantic_richness": 0.545
+  },
+  "diagnosis": [
+    "Layout diversity ratio is 0.75 \u2014 slides use varied layouts, consistent with template-driven authoring.",
+    "75% of slides reference stock layouts (Title Slide, Title and Content, Blank). Common in decks written on the default template without modification.",
+    "54% of layouts have semantically rich names (matching IR intents like 'Three Column', 'Pull Quote'). Consistent with intentional template design.",
+    "Verdict: 'mixed' (template-ness score 0.64, confidence 0.29). Some template structure present but uneven. Manual review recommended; the extractor may produce a partial profile that the user should augment."
+  ]
+}

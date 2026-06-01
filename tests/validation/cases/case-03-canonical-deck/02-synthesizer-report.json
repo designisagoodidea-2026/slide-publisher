@@ -1,0 +1,200 @@
+{
+  "source_deck": "/sessions/jolly-nifty-cori/mnt/Slide Publisher/plugin/tests/validation/cases/case-03-canonical-deck/input.pptx",
+  "synthesized_template": "/sessions/jolly-nifty-cori/mnt/Slide Publisher/plugin/tests/validation/cases/case-03-canonical-deck/S-synthesized.pptx",
+  "n_slides": 8,
+  "n_clusters": 4,
+  "clusters": [
+    {
+      "cluster_id": 0,
+      "derived_name": "Title Slide",
+      "suggested_intent": "title",
+      "member_slide_indices": [
+        0,
+        1
+      ],
+      "n_members": 2,
+      "canonical_shapes": [
+        {
+          "kind": "text",
+          "left": 457200,
+          "top": 2286000,
+          "width": 8229600,
+          "height": 1371600,
+          "dominant_font_pt": 48,
+          "dominant_font_family": "Helvetica",
+          "dominant_fill": "#1F2A44"
+        },
+        {
+          "kind": "text",
+          "left": 457200,
+          "top": 3657600,
+          "width": 8229600,
+          "height": 457200,
+          "dominant_font_pt": 16,
+          "dominant_font_family": "Helvetica",
+          "dominant_fill": "#4A5160"
+        }
+      ]
+    },
+    {
+      "cluster_id": 1,
+      "derived_name": "Three Column",
+      "suggested_intent": "three_pillars",
+      "member_slide_indices": [
+        2,
+        3
+      ],
+      "n_members": 2,
+      "canonical_shapes": [
+        {
+          "kind": "text",
+          "left": 457200,
+          "top": 457200,
+          "width": 8229600,
+          "height": 914400,
+          "dominant_font_pt": 28,
+          "dominant_font_family": "Helvetica",
+          "dominant_fill": "#1F2A44"
+        },
+        {
+          "kind": "text",
+          "left": 457200,
+          "top": 1828800,
+          "width": 2286000,
+          "height": 4114800,
+          "dominant_font_pt": 16,
+          "dominant_font_family": "Helvetica",
+          "dominant_fill": "#1F2A44"
+        },
+        {
+          "kind": "text",
+          "left": 3200400,
+          "top": 1828800,
+          "width": 2286000,
+          "height": 4114800,
+          "dominant_font_pt": 16,
+          "dominant_font_family": "Helvetica",
+          "dominant_fill": "#1F2A44"
+        },
+        {
+          "kind": "text",
+          "left": 5943600,
+          "top": 1828800,
+          "width": 2286000,
+          "height": 4114800,
+          "dominant_font_pt": 16,
+          "dominant_font_family": "Helvetica",
+          "dominant_fill": "#1F2A44"
+        }
+      ]
+    },
+    {
+      "cluster_id": 2,
+      "derived_name": "Stat Block",
+      "suggested_intent": "metrics",
+      "member_slide_indices": [
+        4,
+        5
+      ],
+      "n_members": 2,
+      "canonical_shapes": [
+        {
+          "kind": "text",
+          "left": 457200,
+          "top": 1828800,
+          "width": 8229600,
+          "height": 2286000,
+          "dominant_font_pt": 120,
+          "dominant_font_family": "Helvetica",
+          "dominant_fill": "#E2A03F"
+        },
+        {
+          "kind": "text",
+          "left": 457200,
+          "top": 4114800,
+          "width": 8229600,
+          "height": 914400,
+          "dominant_font_pt": 20,
+          "dominant_font_family": "Helvetica",
+          "dominant_fill": "#1F2A44"
+        }
+      ]
+    },
+    {
+      "cluster_id": 3,
+      "derived_name": "Pull Quote",
+      "suggested_intent": "quote",
+      "member_slide_indices": [
+        6,
+        7
+      ],
+      "n_members": 2,
+      "canonical_shapes": [
+        {
+          "kind": "text",
+          "left": 914400,
+          "top": 1828800,
+          "width": 7315200,
+          "height": 2286000,
+          "dominant_font_pt": 28,
+          "dominant_font_family": "Helvetica",
+          "dominant_fill": "#1F2A44"
+        },
+        {
+          "kind": "text",
+          "left": 914400,
+          "top": 4114800,
+          "width": 7315200,
+          "height": 457200,
+          "dominant_font_pt": 16,
+          "dominant_font_family": "Helvetica",
+          "dominant_fill": "#4A5160"
+        }
+      ]
+    }
+  ],
+  "suggested_layout_map": {
+    "title": "Title Slide",
+    "three_pillars": "Three Column",
+    "metrics": "Stat Block",
+    "quote": "Pull Quote"
+  },
+  "extracted_tokens": {
+    "colors": {
+      "primary": "#1F2A44",
+      "secondary": "#4A5160",
+      "accent": "#E2A03F"
+    },
+    "typography": {
+      "display": {
+        "family": "Helvetica",
+        "size_pt": 120.0,
+        "weight": 700
+      },
+      "heading-1": {
+        "family": "Helvetica",
+        "size_pt": 48.0,
+        "weight": 700
+      },
+      "heading-2": {
+        "family": "Helvetica",
+        "size_pt": 28.0,
+        "weight": 400
+      },
+      "body": {
+        "family": "Helvetica",
+        "size_pt": 20.0,
+        "weight": 400
+      },
+      "caption": {
+        "family": "Helvetica",
+        "size_pt": 16.0,
+        "weight": 400
+      }
+    }
+  },
+  "v0_1_caveats": [
+    "Synthesized .pptx carries layout NAMES only; canonical shape positions are documented in this report but not embedded in the .pptx layouts. v0.2 will embed shapes into the layouts.",
+    "Renderer using this synthesized template will produce decks with the right structural skeleton but without the source deck's visual styling. The user can either (a) accept this as a barebones template and add styling in PowerPoint, or (b) use the canonical shape data in this report to manually rebuild the template with correct positions/fonts/colors."
+  ]
+}

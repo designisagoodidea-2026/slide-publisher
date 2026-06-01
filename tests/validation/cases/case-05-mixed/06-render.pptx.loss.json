@@ -1,0 +1,128 @@
+{
+  "deck_title": "Design system at 12 months: what worked, what didn't, what's next",
+  "rendered_at": "2026-06-01T22:27:00",
+  "renderer": "render-pptx",
+  "template_path": "/sessions/jolly-nifty-cori/mnt/Slide Publisher/plugin/tests/validation/cases/case-05-mixed/input.pptx",
+  "summary": {
+    "lossless": 11,
+    "lossy": 3,
+    "dropped": 5,
+    "annotated": 0
+  },
+  "entries": [
+    {
+      "category": "DROPPED",
+      "slide_id": null,
+      "field": "deck.audience",
+      "detail": "'audience' has no native .pptx representation; preserved only in the loss manifest (value: {'primary': 'Product + design leadership, post-adoption', 'secondary': ['Enginee)."
+    },
+    {
+      "category": "DROPPED",
+      "slide_id": null,
+      "field": "deck.throughline",
+      "detail": "'throughline' has no native .pptx representation; preserved only in the loss manifest (value: The system pays back when adoption is measured on consumption, not coverage \u2014 an)."
+    },
+    {
+      "category": "DROPPED",
+      "slide_id": null,
+      "field": "deck.arc",
+      "detail": "'arc' has no native .pptx representation; preserved only in the loss manifest (value: situation-first)."
+    },
+    {
+      "category": "DROPPED",
+      "slide_id": null,
+      "field": "deck.evidence_anchor",
+      "detail": "'evidence_anchor' has no native .pptx representation; preserved only in the loss manifest (value: hybrid)."
+    },
+    {
+      "category": "DROPPED",
+      "slide_id": null,
+      "field": "deck.duration_min",
+      "detail": "'duration_min' has no native .pptx representation; preserved only in the loss manifest (value: 25)."
+    },
+    {
+      "category": "LOSSLESS",
+      "slide_id": null,
+      "field": "deck.title",
+      "detail": "deck title applied to pptx core properties."
+    },
+    {
+      "category": "LOSSLESS",
+      "slide_id": "title",
+      "field": "speaker_notes",
+      "detail": "speaker notes (130 chars) preserved."
+    },
+    {
+      "category": "LOSSLESS",
+      "slide_id": "where-we-started",
+      "field": "speaker_notes",
+      "detail": "speaker notes (72 chars) preserved."
+    },
+    {
+      "category": "LOSSLESS",
+      "slide_id": "the-headline",
+      "field": "speaker_notes",
+      "detail": "speaker notes (137 chars) preserved."
+    },
+    {
+      "category": "LOSSLESS",
+      "slide_id": "three-things-that-worked",
+      "field": "speaker_notes",
+      "detail": "speaker notes (77 chars) preserved."
+    },
+    {
+      "category": "LOSSY",
+      "slide_id": "the-consumption-gap",
+      "field": "layout_intent",
+      "detail": "intent 'comparison' substituted to 'claim_with_evidence' (template layout 'Content with Caption') via the documented fallback chain."
+    },
+    {
+      "category": "LOSSLESS",
+      "slide_id": "the-consumption-gap",
+      "field": "speaker_notes",
+      "detail": "speaker notes (93 chars) preserved."
+    },
+    {
+      "category": "LOSSLESS",
+      "slide_id": "what-the-data-says",
+      "field": "speaker_notes",
+      "detail": "speaker notes (127 chars) preserved."
+    },
+    {
+      "category": "LOSSLESS",
+      "slide_id": "a-voice-from-the-field",
+      "field": "speaker_notes",
+      "detail": "speaker notes (152 chars) preserved."
+    },
+    {
+      "category": "LOSSLESS",
+      "slide_id": "what-next",
+      "field": "speaker_notes",
+      "detail": "speaker notes (75 chars) preserved."
+    },
+    {
+      "category": "LOSSY",
+      "slide_id": "the-callback",
+      "field": "layout_intent",
+      "detail": "intent 'callout' substituted to 'claim_with_evidence' (template layout 'Content with Caption') via the documented fallback chain."
+    },
+    {
+      "category": "LOSSLESS",
+      "slide_id": "the-callback",
+      "field": "speaker_notes",
+      "detail": "speaker notes (70 chars) preserved."
+    },
+    {
+      "category": "LOSSY",
+      "slide_id": "next-steps",
+      "field": "layout_intent",
+      "detail": "intent 'callout' substituted to 'claim_with_evidence' (template layout 'Content with Caption') via the documented fallback chain."
+    },
+    {
+      "category": "LOSSLESS",
+      "slide_id": "next-steps",
+      "field": "speaker_notes",
+      "detail": "speaker notes (79 chars) preserved."
+    }
+  ]
+}

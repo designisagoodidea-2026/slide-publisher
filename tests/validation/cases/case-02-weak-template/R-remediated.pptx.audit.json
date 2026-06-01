@@ -1,0 +1,93 @@
+{
+  "template_path": "/sessions/jolly-nifty-cori/mnt/Slide Publisher/plugin/tests/validation/cases/case-02-weak-template/input.pptx",
+  "out_path": "/sessions/jolly-nifty-cori/mnt/Slide Publisher/plugin/tests/validation/cases/case-02-weak-template/R-remediated.pptx",
+  "remediated_at": "2026-06-01T22:26:48",
+  "pre_verdict": "fail",
+  "post_verdict": "fail",
+  "summary": {
+    "total_fixes": 7,
+    "by_type": {
+      "layout_rename": 5,
+      "color_palette_recommended": 1,
+      "typeface_recommended": 1
+    },
+    "by_severity": {
+      "layout_catalog_completeness": 5,
+      "color_tokens": 1,
+      "type_tokens": 1
+    }
+  },
+  "entries": [
+    {
+      "fix_type": "layout_rename",
+      "target": "master.layout 'Layout A'",
+      "before": "Layout A",
+      "after": "Section Header",
+      "rationale": "Renamed to match IR intent 'section_break'. Improves layout_catalog_completeness and reduces orphan_elements.",
+      "severity_addressed": "layout_catalog_completeness"
+    },
+    {
+      "fix_type": "layout_rename",
+      "target": "master.layout 'Layout B'",
+      "before": "Layout B",
+      "after": "Three Column",
+      "rationale": "Renamed to match IR intent 'three_pillars'. Improves layout_catalog_completeness and reduces orphan_elements.",
+      "severity_addressed": "layout_catalog_completeness"
+    },
+    {
+      "fix_type": "layout_rename",
+      "target": "master.layout 'Layout C'",
+      "before": "Layout C",
+      "after": "Pull Quote",
+      "rationale": "Renamed to match IR intent 'quote'. Improves layout_catalog_completeness and reduces orphan_elements.",
+      "severity_addressed": "layout_catalog_completeness"
+    },
+    {
+      "fix_type": "layout_rename",
+      "target": "master.layout 'Layout D'",
+      "before": "Layout D",
+      "after": "Stat Block",
+      "rationale": "Renamed to match IR intent 'metrics'. Improves layout_catalog_completeness and reduces orphan_elements.",
+      "severity_addressed": "layout_catalog_completeness"
+    },
+    {
+      "fix_type": "layout_rename",
+      "target": "master.layout 'Blank'",
+      "before": "Blank",
+      "after": "Timeline",
+      "rationale": "Renamed to match IR intent 'timeline'. Improves layout_catalog_completeness and reduces orphan_elements.",
+      "severity_addressed": "layout_catalog_completeness"
+    },
+    {
+      "fix_type": "color_palette_recommended",
+      "target": "theme.colors",
+      "before": "(empty)",
+      "after": {
+        "primary": "#1F2A44",
+        "secondary": "#3F6AB1",
+        "accent": "#E2A03F",
+        "text-primary": "#111418",
+        "text-secondary": "#5B6470",
+        "surface": "#FFFFFF",
+        "surface-muted": "#F4F5F8"
+      },
+      "rationale": "Validator flagged 0 explicit color tokens. v0.1 doesn't auto-edit theme XML (risk of corrupting the file); instead recommends this default palette. Apply via PowerPoint \u2192 View \u2192 Slide Master \u2192 Colors \u2192 Customize Colors.",
+      "severity_addressed": "color_tokens"
+    },
+    {
+      "fix_type": "typeface_recommended",
+      "target": "master.fonts",
+      "before": "(empty)",
+      "after": {
+        "display_and_body": "Inter"
+      },
+      "rationale": "Validator flagged 0 named typefaces. v0.1 doesn't auto-edit theme XML; recommends 'Inter' as the body/display family. Apply via PowerPoint \u2192 View \u2192 Slide Master \u2192 Fonts \u2192 Customize Fonts.",
+      "severity_addressed": "type_tokens"
+    }
+  ],
+  "deferred": [
+    "color_tokens: Default palette recommended in audit; user applies via Slide Master view.",
+    "type_tokens: Recommended typeface 'Inter'; user applies via Slide Master view.",
+    "style_hierarchy: Adding distinct font-size tiers requires Slide Master XML edits; v0.1 deferred. Apply via PowerPoint \u2192 View \u2192 Slide Master and define explicit sizes for heading-1/2/3, body, caption."
+  ]
+}

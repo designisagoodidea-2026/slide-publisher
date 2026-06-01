@@ -117,9 +117,10 @@ The figma classifier returns the same JSON shape as the pptx classifier, but wit
 - Not deterministic. Heuristic scores can be wrong on edge cases. Confidence in the output signals when the result is shaky.
 - Not a fixer. Detection only — `template-synthesizer-<format>` does the remediation.
 
-## Anonymity (plugin policy)
+## Anonymity
 
-This skill ships in the public plugin. The pattern dictionaries are generic; no organization-specific signals; no hard-coded user defaults. Output reflects the user's input only.
+See [`docs/ANONYMITY-NOTE.md`](../../docs/ANONYMITY-NOTE.md).
+
 
 ## Composition with other skills
 

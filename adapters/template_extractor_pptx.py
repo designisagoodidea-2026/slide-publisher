@@ -42,6 +42,12 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
+sys.path.insert(0, str(Path(__file__).parent))
+from _common import (  # noqa: E402
+    LAYOUT_INTENTS, INTENT_PATTERNS, COLOR_TOKEN_ROLES, TYPE_TOKEN_ROLES,
+    infer_layout_map, quality_score,
+)
+
 try:
     from pptx import Presentation
 except ImportError:
@@ -53,70 +59,6 @@ except ImportError:
     sys.exit(2)
 
 
-# The 10 IR layout intents (v0.1). Keep in sync with ir/schema.json.
-LAYOUT_INTENTS: list[str] = [
-    "title",
-    "section_break",
-    "claim_with_evidence",
-    "three_pillars",
-    "comparison",
-    "quote",
-    "image_with_caption",
-    "metrics",
-    "timeline",
-    "callout",
-]
-
-# Heuristic patterns mapping common .pptx layout names to IR layout intents.
-# Matched case-insensitively, substring. Order within a list = priority.
-INTENT_PATTERNS: dict[str, list[str]] = {
-    "title": ["title slide", "title", "cover", "opening"],
-    "section_break": ["section header", "section", "divider", "chapter", "break"],
-    "claim_with_evidence": [
-        "title and content",
-        "content",
-        "body",
-        "claim",
-        "supporting",
-    ],
-    "three_pillars": ["three column", "3 column", "three", "pillars", "tri"],
-    "comparison": ["comparison", "compare", "two column", "2 column", "side by side"],
-    "quote": ["pull quote", "quote", "blockquote", "testimonial"],
-    "image_with_caption": [
-        "image and caption",
-        "picture and caption",
-        "image",
-        "picture",
-        "photo",
-    ],
-    "metrics": ["stat", "metric", "kpi", "number block", "data"],
-    "timeline": ["timeline", "chronology", "milestone", "roadmap"],
-    "callout": ["callout", "big statement", "headline", "punchline", "lockup"],
-}
-
-# Default semantic names for the top-N most-frequent colors found in masters.
-# Generic; users can rename downstream.
-COLOR_TOKEN_ROLES: list[str] = [
-    "primary",
-    "secondary",
-    "accent",
-    "text-primary",
-    "text-secondary",
-    "surface",
-    "surface-muted",
-    "accent-warn",
-]
-
-# Type token roles, allocated to the N largest font sizes found.
-TYPE_TOKEN_ROLES: list[str] = [
-    "heading-1",
-    "heading-2",
-    "heading-3",
-    "body",
-    "caption",
-]
-
-
 def collect_layouts(prs: "Presentation") -> list[tuple[int, int, str]]:
     """Return all layouts across all masters as (master_idx, layout_idx, name)."""
     out = []
@@ -126,26 +68,9 @@ def collect_layouts(prs: "Presentation") -> list[tuple[int, int, str]]:
     return out
 
 
-def infer_layout_map(layouts: list[tuple[int, int, str]]) -> dict[str, str]:
-    """Map IR layout_intent → best-match pptx layout name.
-
-    Each pptx layout name is used at most once. Intents are processed in
-    catalog order; first match wins.
-    """
-    mapping: dict[str, str] = {}
-    used_names: set[str] = set()
-    for intent in LAYOUT_INTENTS:
-        for pattern in INTENT_PATTERNS[intent]:
-            for _, _, name in layouts:
-                if name in used_names:
-                    continue
-                if pattern.lower() in name.lower():
-                    mapping[intent] = name
-                    used_names.add(name)
-                    break
-            if intent in mapping:
-                break
-    return mapping
+def _infer_from_tuples(layouts: list[tuple[int, int, str]]) -> dict[str, str]:
+    """Adapter to use the shared infer_layout_map with this file's tuple type."""
+    return infer_layout_map([name for _, _, name in layouts])
 
 
 def extract_color_tokens(prs: "Presentation") -> dict[str, str]:
@@ -219,24 +144,13 @@ def compute_quality_score(
     color_tokens: dict[str, str],
     type_tokens: dict[str, dict[str, Any]],
 ) -> int:
-    """Heuristic 0-100. Composed of four sub-scores:
-
-    1. layout_coverage  — fraction of IR intents mapped (0.5 weight)
-    2. layout_breadth   — does the catalog have ≥10 layouts at all? (0.2 weight)
-    3. color_tokens     — fraction of color roles filled (0.15 weight)
-    4. type_tokens      — fraction of type roles filled (0.15 weight)
-    """
-    layout_coverage = len(layout_map) / len(LAYOUT_INTENTS)
-    layout_breadth = min(1.0, len(layouts) / 10.0)
-    color_completeness = len(color_tokens) / len(COLOR_TOKEN_ROLES)
-    type_completeness = len(type_tokens) / len(TYPE_TOKEN_ROLES)
-    score = (
-        0.50 * layout_coverage
-        + 0.20 * layout_breadth
-        + 0.15 * color_completeness
-        + 0.15 * type_completeness
+    """Same as _common.quality_score but with this file's calling shape."""
+    return quality_score(
+        layout_map=layout_map,
+        n_layouts=len(layouts),
+        n_color_tokens=len(color_tokens),
+        n_type_tokens=len(type_tokens),
     )
-    return int(round(score * 100))
 
 
 def diagnose(
@@ -282,7 +196,7 @@ def extract(pptx_path: str | Path) -> dict[str, Any]:
     """Run the full extraction pipeline against a .pptx file."""
     prs = Presentation(str(pptx_path))
     layouts = collect_layouts(prs)
-    layout_map = infer_layout_map(layouts)
+    layout_map = _infer_from_tuples(layouts)
     color_tokens = extract_color_tokens(prs)
     type_tokens = extract_typography(prs)
     quality_score = compute_quality_score(layout_map, layouts, color_tokens, type_tokens)

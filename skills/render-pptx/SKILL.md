@@ -99,9 +99,10 @@ A manifest with >10 LOSSY is a signal to revisit the template profile — likely
 - Not a chart engine. `metric` blocks render as typeset text; chart visualization is v0.3.
 - Not a Figma renderer. See `render-figma`.
 
-## Anonymity (plugin policy)
+## Anonymity
 
-This skill ships in the public plugin. No hard-coded layouts, no user-specific fallbacks, no organization templates. The renderer reads only the user's own IR + profile + template.
+See [`docs/ANONYMITY-NOTE.md`](../../docs/ANONYMITY-NOTE.md).
+
 
 ## Composition with other skills
 

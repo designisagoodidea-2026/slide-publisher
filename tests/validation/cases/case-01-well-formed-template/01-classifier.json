@@ -1,0 +1,20 @@
+{
+  "format": "pptx",
+  "classification": "template",
+  "confidence": 0.75,
+  "signals": {
+    "n_slides": 10,
+    "n_layouts_available": 11,
+    "n_layouts_used": 10,
+    "layout_diversity_ratio": 1.0,
+    "default_layout_ratio": 0.4,
+    "direct_overrides_estimate": 0,
+    "direct_overrides_per_slide": 0.0,
+    "layout_name_semantic_richness": 0.818
+  },
+  "diagnosis": [
+    "Layout diversity ratio is 1.00 \u2014 slides use varied layouts, consistent with template-driven authoring.",
+    "81% of layouts have semantically rich names (matching IR intents like 'Three Column', 'Pull Quote'). Consistent with intentional template design.",
+    "Verdict: 'template' (template-ness score 0.87, confidence 0.75)."
+  ]
+}

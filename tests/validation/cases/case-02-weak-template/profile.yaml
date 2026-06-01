@@ -1,0 +1,16 @@
+profile_version: 1.0.0
+preferred_output: pptx
+templates:
+  pptx:
+    path: /sessions/jolly-nifty-cori/mnt/Slide Publisher/plugin/tests/validation/cases/case-02-weak-template/input.pptx
+    layout_map:
+      title: Title Only
+      claim_with_evidence: Content with Caption
+      comparison: Comparison
+      image_with_caption: Picture with Caption
+    quality_score: 40
+style_tokens:
+  colors: {}
+  typography: {}
+setup_completed: '2026-06-01'
+setup_version: 0.1.0-pre

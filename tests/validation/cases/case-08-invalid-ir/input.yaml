@@ -1,0 +1,17 @@
+# Invalid IR — missing required fields. Validator should reject.
+# Specifically: missing deck.throughline, deck.arc, deck.evidence_anchor.
+# Also has a slide with invalid beat name "intro" (not in the 9-value catalog).
+
+ir_version: "1.0.0"
+
+deck:
+  title: "Broken deck"
+  audience:
+    primary: "(blank)"
+    prior_knowledge: cold
+
+slides:
+  - id: title
+    beat: intro     # ← INVALID — should be "hook"
+    layout_intent: title
+    title: ""       # ← INVALID — must be non-empty

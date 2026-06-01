@@ -169,9 +169,10 @@ For v0.1 Figma templates, supplement the validator's report with a manual inspec
 - Output feeds the user-facing quality report in `template-setup` Step 5.
 - Called by renderers (`render-pptx`, `render-figma`) in `--strict` mode as a pre-flight check.
 
-## Anonymity (plugin policy)
+## Anonymity
 
-Heuristics are generic; no organization-specific patterns, no user defaults baked in. The validator runs entirely against the user's input file and emits a structured report — no outbound calls, no telemetry.
+See [`docs/ANONYMITY-NOTE.md`](../../docs/ANONYMITY-NOTE.md).
+
 
 ## What this skill is NOT
 

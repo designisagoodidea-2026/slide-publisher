@@ -1,0 +1,20 @@
+{
+  "format": "pptx",
+  "classification": "deck-with-implicit-pattern",
+  "confidence": 0.34,
+  "signals": {
+    "n_slides": 8,
+    "n_layouts_available": 11,
+    "n_layouts_used": 1,
+    "layout_diversity_ratio": 0.125,
+    "default_layout_ratio": 1.0,
+    "direct_overrides_estimate": 2,
+    "direct_overrides_per_slide": 0.25,
+    "layout_name_semantic_richness": 0.364
+  },
+  "diagnosis": [
+    "Layout diversity ratio is 0.12 \u2014 most slides share the same layout, suggesting a deck written on default layouts.",
+    "100% of slides reference stock layouts (Title Slide, Title and Content, Blank). Common in decks written on the default template without modification.",
+    "Verdict: 'deck-with-implicit-pattern' (template-ness score 0.33, confidence 0.34). Recommend running template-synthesizer-pptx to derive a template from the recurring visual patterns in the deck."
+  ]
+}

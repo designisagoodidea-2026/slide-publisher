@@ -47,70 +47,24 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
+sys.path.insert(0, str(Path(__file__).parent))
+from _common import (  # noqa: E402
+    LAYOUT_INTENTS, INTENT_PATTERNS, infer_layout_map,
+    severity_from_fraction as _severity_from_fraction,
+    severity_from_count as _severity_from_count,
+)
+
 try:
     from pptx import Presentation
 except ImportError:
     Presentation = None  # type: ignore
 
 
-# IR layout intents (v0.1) — keep in sync with ir/schema.json.
-LAYOUT_INTENTS: list[str] = [
-    "title", "section_break", "claim_with_evidence", "three_pillars",
-    "comparison", "quote", "image_with_caption", "metrics", "timeline", "callout",
-]
-
-# Same heuristic patterns the pptx extractor uses, in case validator is
-# called without an extractor profile entry.
-INTENT_PATTERNS: dict[str, list[str]] = {
-    "title": ["title slide", "title", "cover", "opening"],
-    "section_break": ["section header", "section", "divider", "chapter", "break"],
-    "claim_with_evidence": ["title and content", "content", "body", "claim", "supporting"],
-    "three_pillars": ["three column", "3 column", "three", "pillars", "tri"],
-    "comparison": ["comparison", "compare", "two column", "2 column", "side by side"],
-    "quote": ["pull quote", "quote", "blockquote", "testimonial"],
-    "image_with_caption": ["image and caption", "picture and caption", "image", "picture", "photo"],
-    "metrics": ["stat", "metric", "kpi", "number block", "data"],
-    "timeline": ["timeline", "chronology", "milestone", "roadmap"],
-    "callout": ["callout", "big statement", "headline", "punchline", "lockup"],
-}
-
-
-# ---- Severity assignment helpers ----------------------------------------
-
-def _severity_from_fraction(frac: float, green_at: float, yellow_at: float) -> str:
-    if frac >= green_at:
-        return "green"
-    if frac >= yellow_at:
-        return "yellow"
-    return "red"
-
-
-def _severity_from_count(count: int, green_at: int, yellow_at: int) -> str:
-    if count >= green_at:
-        return "green"
-    if count >= yellow_at:
-        return "yellow"
-    return "red"
-
-
 # ---- pptx validator ------------------------------------------------------
 
 def _infer_layout_map(layouts: list[str]) -> dict[str, str]:
-    """Same name-matching heuristic as the extractor. First match wins."""
-    mapping: dict[str, str] = {}
-    used: set[str] = set()
-    for intent in LAYOUT_INTENTS:
-        for pattern in INTENT_PATTERNS[intent]:
-            for name in layouts:
-                if name in used:
-                    continue
-                if pattern.lower() in name.lower():
-                    mapping[intent] = name
-                    used.add(name)
-                    break
-            if intent in mapping:
-                break
-    return mapping
+    """Wrapper to keep call sites unchanged after factoring to _common."""
+    return infer_layout_map(layouts)
 
 
 def validate_pptx(template_path: str | Path) -> dict[str, Any]:
@@ -145,7 +99,7 @@ def validate_pptx(template_path: str | Path) -> dict[str, Any]:
 
     # 1. Layout-catalog completeness
     coverage = len(layout_map) / len(LAYOUT_INTENTS)
-    sev = _severity_from_fraction(coverage, green_at=1.0, yellow_at=0.7)
+    sev = _severity_from_fraction(coverage, green_at=1.0, yellow_at=0.7)  # explicit kwargs
     missing = [i for i in LAYOUT_INTENTS if i not in layout_map]
     findings.append({
         "criterion": "layout_catalog_completeness",
@@ -316,7 +270,7 @@ def validate_figma(file_key: str, profile_entry: dict | None = None) -> dict[str
     # 1. Layout-catalog completeness — from extractor's layout_map
     layout_map = profile_entry.get("layout_map", {})
     coverage = len(layout_map) / len(LAYOUT_INTENTS)
-    sev = _severity_from_fraction(coverage, green_at=1.0, yellow_at=0.7)
+    sev = _severity_from_fraction(coverage, green_at=1.0, yellow_at=0.7)  # explicit kwargs
     missing = [i for i in LAYOUT_INTENTS if i not in layout_map]
     findings.append({
         "criterion": "layout_catalog_completeness",

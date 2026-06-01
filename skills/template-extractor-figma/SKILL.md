@@ -204,11 +204,10 @@ The adapter emits:
 - No auto-extraction of constraints / auto-layout properties. The renderer infers these at render time.
 - Only one Figma file per profile. Multi-file design systems aren't supported in v0.1 — pick the primary slide template file.
 
-## Anonymity (plugin policy)
+## Anonymity
 
-This skill ships in the public, anonymous plugin. The adapter has no hard-coded organization patterns, no proprietary file references. The Plugin API rules are derived from generally-applicable Figma performance behavior, not from any specific user's deck-family.
+See [`docs/ANONYMITY-NOTE.md`](../../docs/ANONYMITY-NOTE.md).
 
-The MCP call inspects the user's own Figma file; outputs reflect only that file's structure. No outbound network calls.
 
 ## Composition with other skills
 

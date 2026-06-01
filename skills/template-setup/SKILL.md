@@ -178,9 +178,10 @@ Don't try to proceed without MCP access — the extractor needs it.
 - Not a template editor. The wizard ingests and analyzes; it does not modify the user's source files.
 - Not a one-shot autopilot. Each step asks for input or confirmation. Setup is a deliberate handshake between the plugin and the user's brand identity.
 
-## Anonymity (plugin policy)
+## Anonymity
 
-This skill ships in the public, anonymous plugin. No user data is hard-coded. The bundled neutral default template (`template-profile/default-template/`) is generic — no organization identity. The wizard runs entirely against the user's own inputs and writes only to the user's config directory.
+See [`docs/ANONYMITY-NOTE.md`](../../docs/ANONYMITY-NOTE.md).
+
 
 ## Composition with other skills
 

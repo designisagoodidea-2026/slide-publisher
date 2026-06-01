@@ -1,0 +1,31 @@
+{
+  "layout_map": {
+    "title": "Title Only",
+    "claim_with_evidence": "Content with Caption",
+    "comparison": "Comparison",
+    "image_with_caption": "Picture with Caption"
+  },
+  "style_tokens": {
+    "colors": {},
+    "typography": {}
+  },
+  "quality_score": 40,
+  "_inspected_layouts": [
+    "Layout A",
+    "Layout B",
+    "Layout C",
+    "Layout D",
+    "Comparison",
+    "Title Only",
+    "Blank",
+    "Content with Caption",
+    "Picture with Caption",
+    "Title and Vertical Text",
+    "Vertical Title and Text"
+  ],
+  "_findings": [
+    "6 of 10 IR layout intents have no matching pptx layout: section_break, three_pillars, quote, metrics, timeline, callout. Renderers will fall back to 'nearest available' and log a substitution in the loss manifest.",
+    "No explicit color tokens extracted. The template may rely on theme colors only; renderers will inherit from the slide master.",
+    "No typography tokens extracted. The template may not define explicit type styles in its masters."
+  ]
+}

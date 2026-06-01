@@ -1,0 +1,17 @@
+profile_version: 1.0.0
+preferred_output: pptx
+templates:
+  pptx:
+    path: /sessions/jolly-nifty-cori/mnt/Slide Publisher/plugin/tests/validation/cases/case-06-empty-template/input.pptx
+    layout_map:
+      title: Title Slide
+      section_break: Section Header
+      claim_with_evidence: Title and Content
+      comparison: Comparison
+      image_with_caption: Picture with Caption
+    quality_score: 45
+style_tokens:
+  colors: {}
+  typography: {}
+setup_completed: '2026-06-01'
+setup_version: 0.1.0-pre

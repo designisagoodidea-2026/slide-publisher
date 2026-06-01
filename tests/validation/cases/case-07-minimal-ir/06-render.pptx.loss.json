@@ -1,0 +1,44 @@
+{
+  "deck_title": "Three-slide deck",
+  "rendered_at": "2026-06-01T22:27:06",
+  "renderer": "render-pptx",
+  "template_path": "/sessions/jolly-nifty-cori/mnt/Slide Publisher/plugin/tests/fixtures/synthetic-template.pptx",
+  "summary": {
+    "lossless": 1,
+    "lossy": 0,
+    "dropped": 4,
+    "annotated": 0
+  },
+  "entries": [
+    {
+      "category": "DROPPED",
+      "slide_id": null,
+      "field": "deck.audience",
+      "detail": "'audience' has no native .pptx representation; preserved only in the loss manifest (value: {'primary': 'Internal team', 'prior_knowledge': 'warm'})."
+    },
+    {
+      "category": "DROPPED",
+      "slide_id": null,
+      "field": "deck.throughline",
+      "detail": "'throughline' has no native .pptx representation; preserved only in the loss manifest (value: We can ship a 3-slide deck with this IR.)."
+    },
+    {
+      "category": "DROPPED",
+      "slide_id": null,
+      "field": "deck.arc",
+      "detail": "'arc' has no native .pptx representation; preserved only in the loss manifest (value: situation-first)."
+    },
+    {
+      "category": "DROPPED",
+      "slide_id": null,
+      "field": "deck.evidence_anchor",
+      "detail": "'evidence_anchor' has no native .pptx representation; preserved only in the loss manifest (value: hybrid)."
+    },
+    {
+      "category": "LOSSLESS",
+      "slide_id": null,
+      "field": "deck.title",
+      "detail": "deck title applied to pptx core properties."
+    }
+  ]
+}

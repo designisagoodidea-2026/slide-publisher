@@ -46,37 +46,11 @@ import sys
 from pathlib import Path
 from typing import Any
 
-
-# IR layout intents (v0.1) — keep in sync with ir/schema.json.
-LAYOUT_INTENTS: list[str] = [
-    "title", "section_break", "claim_with_evidence", "three_pillars",
-    "comparison", "quote", "image_with_caption", "metrics", "timeline", "callout",
-]
-
-# Same heuristic patterns the pptx extractor + validator use. Reused here for
-# title-text matching (cos-figma-publish-chain Rule 2: identify by title text).
-INTENT_PATTERNS: dict[str, list[str]] = {
-    "title": ["title slide", "title", "cover", "opening"],
-    "section_break": ["section header", "section", "divider", "chapter", "break"],
-    "claim_with_evidence": ["title and content", "content", "body", "claim", "supporting"],
-    "three_pillars": ["three column", "3 column", "three", "pillars", "tri"],
-    "comparison": ["comparison", "compare", "two column", "2 column", "side by side"],
-    "quote": ["pull quote", "quote", "blockquote", "testimonial"],
-    "image_with_caption": ["image and caption", "picture and caption", "image", "picture", "photo"],
-    "metrics": ["stat", "metric", "kpi", "number block", "data"],
-    "timeline": ["timeline", "chronology", "milestone", "roadmap"],
-    "callout": ["callout", "big statement", "headline", "punchline", "lockup"],
-}
-
-# Default semantic names for color and type tokens. Same conventions as pptx
-# extractor for cross-format consistency.
-COLOR_TOKEN_ROLES: list[str] = [
-    "primary", "secondary", "accent", "text-primary", "text-secondary",
-    "surface", "surface-muted", "accent-warn",
-]
-TYPE_TOKEN_ROLES: list[str] = [
-    "display", "heading-1", "heading-2", "body", "caption",
-]
+sys.path.insert(0, str(Path(__file__).parent))
+from _common import (  # noqa: E402
+    LAYOUT_INTENTS, INTENT_PATTERNS, COLOR_TOKEN_ROLES, TYPE_TOKEN_ROLES,
+    quality_score, diagnose_coverage,
+)
 
 
 def map_templates_to_intents(slide_templates: list[dict]) -> dict[str, str]:
@@ -160,18 +134,12 @@ def compute_quality_score(
     color_tokens: dict[str, str],
     type_tokens: dict[str, Any],
 ) -> int:
-    """Same weighted heuristic as the pptx extractor."""
-    layout_coverage = len(layout_map) / len(LAYOUT_INTENTS)
-    layout_breadth = min(1.0, n_templates_inspected / 10.0)
-    color_completeness = min(1.0, len(color_tokens) / len(COLOR_TOKEN_ROLES))
-    type_completeness = min(1.0, len(type_tokens) / len(TYPE_TOKEN_ROLES))
-    score = (
-        0.50 * layout_coverage
-        + 0.20 * layout_breadth
-        + 0.15 * color_completeness
-        + 0.15 * type_completeness
+    return quality_score(
+        layout_map=layout_map,
+        n_layouts=n_templates_inspected,
+        n_color_tokens=len(color_tokens),
+        n_type_tokens=len(type_tokens),
     )
-    return int(round(score * 100))
 
 
 def diagnose(
@@ -180,32 +148,13 @@ def diagnose(
     color_tokens: dict[str, str],
     type_tokens: dict,
 ) -> list[str]:
-    findings: list[str] = []
-    if n_templates == 0:
-        findings.append("No slide-template frames found in the Figma file. "
-                        "Make sure each template frame's Heading child contains "
-                        "the layout intent as text.")
-    missing = [i for i in LAYOUT_INTENTS if i not in layout_map]
-    if missing:
-        findings.append(
-            f"{len(missing)} of {len(LAYOUT_INTENTS)} IR layout intents lack a "
-            f"matching template: {', '.join(missing)}. Renderers will fall "
-            f"back to 'nearest available' and log substitutions in the loss "
-            f"manifest."
-        )
-    if not color_tokens:
-        findings.append(
-            "No Figma color styles found. Define styles via Figma → Styles → "
-            "Colors so the renderers can theme consistently."
-        )
-    if not type_tokens:
-        findings.append(
-            "No Figma text styles found. Define styles via Figma → Styles → "
-            "Text so the renderers can match IR layout intents to type tiers."
-        )
-    if n_templates > 0 and len(layout_map) == len(LAYOUT_INTENTS):
-        findings.append("All 10 IR layout intents have a matching Figma slide template.")
-    return findings
+    return diagnose_coverage(
+        n_layouts_inspected=n_templates,
+        layout_map=layout_map,
+        n_color_tokens=len(color_tokens),
+        n_type_tokens=len(type_tokens),
+        format_label="Figma slide template",
+    )
 
 
 def extract_from_mcp_output(mcp_output: dict) -> dict[str, Any]:

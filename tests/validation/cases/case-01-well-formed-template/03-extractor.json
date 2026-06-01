@@ -1,0 +1,37 @@
+{
+  "layout_map": {
+    "title": "Title Slide",
+    "section_break": "Section Header",
+    "claim_with_evidence": "Title and Content",
+    "three_pillars": "Three Column",
+    "comparison": "Comparison",
+    "quote": "Pull Quote",
+    "image_with_caption": "Image and Caption",
+    "metrics": "Stat Block",
+    "timeline": "Timeline",
+    "callout": "Big Statement"
+  },
+  "style_tokens": {
+    "colors": {},
+    "typography": {}
+  },
+  "quality_score": 70,
+  "_inspected_layouts": [
+    "Title Slide",
+    "Section Header",
+    "Title and Content",
+    "Three Column",
+    "Comparison",
+    "Pull Quote",
+    "Image and Caption",
+    "Stat Block",
+    "Timeline",
+    "Big Statement",
+    "Vertical Title and Text"
+  ],
+  "_findings": [
+    "No explicit color tokens extracted. The template may rely on theme colors only; renderers will inherit from the slide master.",
+    "No typography tokens extracted. The template may not define explicit type styles in its masters.",
+    "All 10 IR layout intents have a matching pptx layout. Clean coverage."
+  ]
+}

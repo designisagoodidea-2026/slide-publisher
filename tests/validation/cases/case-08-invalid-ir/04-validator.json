@@ -1,0 +1,40 @@
+{
+  "format": "ir",
+  "schema_valid": false,
+  "errors": [
+    {
+      "path": [
+        "deck"
+      ],
+      "message": "'throughline' is a required property"
+    },
+    {
+      "path": [
+        "deck"
+      ],
+      "message": "'arc' is a required property"
+    },
+    {
+      "path": [
+        "deck"
+      ],
+      "message": "'evidence_anchor' is a required property"
+    },
+    {
+      "path": [
+        "slides",
+        0,
+        "beat"
+      ],
+      "message": "'intro' is not one of ['hook', 'context', 'problem', 'claim', 'evidence', 'tension', 'resolution', 'callback', 'next']"
+    },
+    {
+      "path": [
+        "slides",
+        0,
+        "title"
+      ],
+      "message": "'' should be non-empty"
+    }
+  ]
+}
