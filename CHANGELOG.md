@@ -12,6 +12,27 @@ All notable changes to slide-publisher are documented here. Format follows [Keep
 - Live structural checks for Figma in `template-validator` (`style_hierarchy`, `orphan_elements`-equivalent).
 - Richer Figma Slides starter template (current minimal starter is task #100).
 
+## [0.2.1] — 2026-06-02
+
+Patch. Fixes the silent-content-loss + body-overflow bugs in `adapters/pptx_renderer.py` for multi-placeholder layouts (Comparison, Picture with Caption, etc.). Surfaced during visual QA of the executive-briefing IR rendered against the Madison theme.
+
+### Fixed
+
+- **`pptx_renderer.populate_body` rewritten for multi-placeholder layouts.** New `_classify_placeholders` returns three buckets — `content_phs` (OBJECT type 7, the large column slots), `body_phs` (BODY type 2, single-body or column headers), `picture_phs` (image slots). System placeholders (DATE=16, FOOTER=15, SLIDE_NUMBER=13, HEADER=14) excluded entirely.
+- **Single-bullets-block + 2+ content slots ⇒ split bullets evenly across columns.** Comparison-style layouts now actually use both columns as intended, instead of dumping all bullets into the first column and overflowing.
+- **Standard distribute: 1:1 across (content + body) placeholders, content preferred.** Overflow blocks concatenated into the last placeholder. No more silent drops when IR has more body blocks than the layout has slots.
+- **Trailing unused text placeholders cleared.** PowerPoint's default "Click to add text" prompts no longer appear in rendered decks.
+- **Empty picture placeholders recorded as ANNOTATED** in the loss manifest, so users know where an image asset is expected.
+
+### Verified
+
+End-to-end against `ir/examples/executive-briefing.yaml` × Madison theme. Slide 7 (Picture with Caption) renders title + prose in the caption slot, picture slot empty. Slide 8 (Comparison) renders title + 2 bullets in the left column + 1 bullet in the right column — no collision, no overflow, no prompt placeholders. Integration test suite: 13 of 13 passed.
+
+### Closes
+
+- Task #89 — empty placeholders + body overflow in pptx render (early UAT finding).
+- Task #110 — renderer needs multi-placeholder layout handling for Comparison etc.
+
 ## [0.2.0] — 2026-06-02
 
 Second release. Adds the storytelling layer (8 starter styles + 5 new compile-mode skills), the MCP-driven Figma template-instance path (extractor + renderer rewritten to drive the Anthropic-hosted Figma MCP rather than a user-installed plugin), the deterministic-preflight system (`CAPABILITIES.yaml` + `uat/preflight.py`), and the visual-QA routine (render harness + baselines + per-region diff + anomaly classifier + auto-remediation loop).
@@ -130,6 +151,7 @@ After-fix results: 7 pass + 2 warn out of 9 native .pptx files (excluding a Powe
 - Bullet styling and metric-as-chart rendering deferred to v0.2.
 - Clustering in both synthesizers is exact-match on quantized signature; similarity-thresholded clustering is v0.2.
 
-[Unreleased]: https://github.com/designisagoodidea-2026/slide-publisher/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/designisagoodidea-2026/slide-publisher/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/designisagoodidea-2026/slide-publisher/releases/tag/v0.2.1
 [0.2.0]: https://github.com/designisagoodidea-2026/slide-publisher/releases/tag/v0.2.0
 [0.1.0]: https://github.com/designisagoodidea-2026/slide-publisher/releases/tag/v0.1.0
