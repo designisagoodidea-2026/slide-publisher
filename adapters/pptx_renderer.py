@@ -240,45 +240,227 @@ def populate_body(
 ) -> None:
     """Populate a slide's body content from IR body_blocks.
 
-    Strategy: find body placeholders (idx > 0 and type is BODY/CONTENT).
-    For each body_block, render into the next available placeholder.
-    If we run out of placeholders, the remaining blocks are DROPPED.
+    Strategy (v0.2.1 — multi-placeholder aware):
+
+      1. Classify non-title placeholders by capability: text-capable vs picture-only.
+      2. If the layout has zero text placeholders → DROP all body_blocks (record).
+      3. Special case — single bullets block + multiple text placeholders:
+         split the bullets list evenly across the placeholders so layouts like
+         "Comparison" (Before / After) actually get used as intended instead of
+         dumping all bullets into the first column and overflowing.
+      4. Otherwise distribute body_blocks 1:1 across text placeholders in order;
+         if more blocks than placeholders, concatenate the overflow into the
+         LAST placeholder (preserves content even when layout shape mismatches).
+      5. Clear any trailing unused text placeholders so the rendered slide
+         doesn't show PowerPoint's default "Click to add text" prompt.
+      6. Record every empty picture placeholder as ANNOTATED so the user knows
+         where an image asset would go.
+
+    Fixes the silent-content-loss bug from the executive-briefing × Madison
+    render: slide 7's diagram + prose used to drop the prose (no second text
+    slot); slide 8's bullets used to overflow (all in first slot, ignoring the
+    second). Both now bind across the layout's actual placeholder structure.
     """
-    body_placeholders = [
-        ph for ph in slide.placeholders
-        if ph.placeholder_format.idx != 0  # 0 = title
-    ]
+    content_phs, body_phs, picture_placeholders = _classify_placeholders(slide)
+    # Preferred binding order: content slots first, then body/header slots.
+    text_placeholders = content_phs + body_phs
 
     if not body_blocks:
+        for ph in text_placeholders:
+            _safe_clear_text_frame(ph)
         return
 
-    if not body_placeholders:
+    if not text_placeholders:
         manifest.add(
             "DROPPED", slide_id, "body_blocks",
-            f"layout has no body placeholders; {len(body_blocks)} body block(s) "
-            f"were dropped.",
+            f"layout has no text-capable body placeholders; "
+            f"{len(body_blocks)} body block(s) were dropped.",
         )
         return
 
-    # For simple v0.1 strategy: concatenate all blocks into the first body
-    # placeholder as text. The placeholder will preserve template styling.
-    ph = body_placeholders[0]
-    text_frame = ph.text_frame
-    text_frame.clear()
+    n_ph = len(text_placeholders)
+    n_content = len(content_phs)
+    n_blocks = len(body_blocks)
 
-    first_run = True
-    for i, block in enumerate(body_blocks):
-        kind = block.get("kind", "")
-        content = block.get("content")
-        text = _render_block_to_text(kind, content, manifest, slide_id, i)
-        if text is None:
+    # --- (3) Special case: single bullets block + 2+ CONTENT slots ---
+    # Layouts like Comparison have two large OBJECT slots for left/right
+    # columns. When IR has a single bullets block with enough items to fill
+    # both columns, split the bullets across the content slots only — and
+    # clear the small BODY/header slots so they don't show prompt text.
+    if (n_blocks == 1 and n_content >= 2
+            and body_blocks[0].get("kind") == "bullets"):
+        bullets = body_blocks[0].get("content", [])
+        if isinstance(bullets, list) and len(bullets) >= n_content:
+            chunks = _split_evenly(bullets, n_content)
+            for ph, chunk in zip(content_phs, chunks):
+                _set_text_frame_to_bullets(ph, chunk)
+            for ph in body_phs:
+                _safe_clear_text_frame(ph)
+            manifest.add(
+                "ANNOTATED", slide_id, "body_blocks[0].kind=bullets",
+                f"{len(bullets)} bullet(s) split across {n_content} "
+                f"layout column(s).",
+            )
+            for ph in picture_placeholders:
+                manifest.add(
+                    "ANNOTATED", slide_id, "empty_picture_placeholder",
+                    "picture placeholder left empty; IR supplied no image asset.",
+                )
+            return
+
+    # --- (4) Standard distribute: one block per placeholder, concat overflow ---
+    if n_blocks <= n_ph:
+        # 1:1 binding; trailing placeholders cleared
+        for i in range(n_blocks):
+            block = body_blocks[i]
+            text = _render_block_to_text(
+                block.get("kind", ""), block.get("content"),
+                manifest, slide_id, i,
+            )
+            _set_text_frame_to_text(text_placeholders[i], text)
+        for ph in text_placeholders[n_blocks:]:
+            _safe_clear_text_frame(ph)
+    else:
+        # First n_ph-1 placeholders get one block each; last gets the remainder
+        for i in range(n_ph - 1):
+            block = body_blocks[i]
+            text = _render_block_to_text(
+                block.get("kind", ""), block.get("content"),
+                manifest, slide_id, i,
+            )
+            _set_text_frame_to_text(text_placeholders[i], text)
+        # Concat the remaining blocks into the last placeholder
+        last_ph = text_placeholders[-1]
+        try:
+            tf = last_ph.text_frame
+        except Exception:
+            tf = None
+        if tf is not None:
+            tf.clear()
+            first_para = True
+            for j in range(n_ph - 1, n_blocks):
+                block = body_blocks[j]
+                text = _render_block_to_text(
+                    block.get("kind", ""), block.get("content"),
+                    manifest, slide_id, j,
+                )
+                if text is None:
+                    continue
+                if first_para:
+                    tf.paragraphs[0].text = text
+                    first_para = False
+                else:
+                    p = tf.add_paragraph()
+                    p.text = text
+
+    # --- (6) Record empty picture placeholders for transparency ---
+    for ph in picture_placeholders:
+        manifest.add(
+            "ANNOTATED", slide_id, "empty_picture_placeholder",
+            "picture placeholder left empty; IR supplied no image asset.",
+        )
+
+
+# ---------------------------------------------------------------------------
+# Placeholder classification + safe text helpers (v0.2.1)
+# ---------------------------------------------------------------------------
+
+def _classify_placeholders(slide: Any) -> tuple[list, list, list]:
+    """Split non-title placeholders into three buckets:
+
+      content_phs: OBJECT-typed (7) — the large content slots in layouts like
+                   "Title and Content" and Comparison's two-column body areas.
+                   Preferred for IR body_block binding.
+      body_phs:    BODY-typed (2) — text placeholders. In single-body layouts
+                   like "Title and Content" these ARE the body slot; in
+                   multi-section layouts like Comparison they're typically
+                   small header labels ("Before:"/"After:"). Used as overflow
+                   or fallback when no OBJECT slots exist.
+      picture_phs: media placeholders that can't hold text. Left empty;
+                   recorded as ANNOTATED.
+
+    System placeholders (DATE=16, FOOTER=15, SLIDE_NUMBER=13, HEADER=14) are
+    excluded entirely — they hold metadata, not IR content.
+    """
+    SYSTEM_TYPES = {13, 14, 15, 16}
+    OBJECT_TYPE = 7
+    BODY_TYPE = 2
+
+    content_phs, body_phs, picture_phs = [], [], []
+    for ph in slide.placeholders:
+        pf = ph.placeholder_format
+        if pf.idx == 0:
             continue
-        if first_run:
-            text_frame.paragraphs[0].text = text
-            first_run = False
+        try:
+            type_val = int(pf.type) if pf.type is not None else None
+        except Exception:
+            type_val = None
+        if type_val in SYSTEM_TYPES:
+            continue
+        try:
+            _ = ph.text_frame
+        except Exception:
+            picture_phs.append(ph)
+            continue
+        if type_val == OBJECT_TYPE:
+            content_phs.append(ph)
         else:
-            p = text_frame.add_paragraph()
-            p.text = text
+            body_phs.append(ph)
+    return content_phs, body_phs, picture_phs
+
+
+def _safe_clear_text_frame(ph: Any) -> None:
+    """Best-effort clear of a placeholder's text frame; ignore failures."""
+    try:
+        ph.text_frame.clear()
+    except Exception:
+        pass
+
+
+def _set_text_frame_to_text(ph: Any, text: str | None) -> None:
+    """Replace a placeholder's text frame contents with a single string."""
+    if text is None:
+        _safe_clear_text_frame(ph)
+        return
+    try:
+        tf = ph.text_frame
+        tf.clear()
+        tf.paragraphs[0].text = text
+    except Exception:
+        pass
+
+
+def _set_text_frame_to_bullets(ph: Any, bullets: list[str]) -> None:
+    """Replace a placeholder's text frame contents with a bullet list."""
+    try:
+        tf = ph.text_frame
+        tf.clear()
+        for i, b in enumerate(bullets):
+            if i == 0:
+                tf.paragraphs[0].text = str(b)
+            else:
+                p = tf.add_paragraph()
+                p.text = str(b)
+    except Exception:
+        pass
+
+
+def _split_evenly(items: list, n_chunks: int) -> list[list]:
+    """Distribute `items` across `n_chunks` lists as evenly as possible.
+
+    For 5 items into 2 chunks → [3, 2]. For 7 items into 3 chunks → [3, 2, 2].
+    Order is preserved within and across chunks.
+    """
+    if n_chunks <= 0:
+        return []
+    base, extra = divmod(len(items), n_chunks)
+    out = []
+    idx = 0
+    for c in range(n_chunks):
+        size = base + (1 if c < extra else 0)
+        out.append(items[idx:idx + size])
+        idx += size
+    return out
 
 
 def _render_block_to_text(
