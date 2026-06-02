@@ -2,7 +2,16 @@
 
 > Story-aware slide generation across PowerPoint and Figma Slides. Compile your audience, throughline, and beats into a portable intermediate representation; render to multiple formats; get a named loss manifest with every render.
 
-A Cowork plugin for people whose decks should reflect a structured story — not a stack of templates filled in. v0.1 supports `.pptx` and Figma Slides. Google Slides lands in v0.2.
+A Cowork plugin for people whose decks should reflect a structured story — not a stack of templates filled in. **v0.2 is live.** PowerPoint + Figma Slides are supported targets; Google Slides lands in v0.3.
+
+## What's in v0.2
+
+Compared to v0.1, the plugin gains four substantial systems:
+
+- **Storytelling layer.** 8 starter styles (`ted-talk`, `duarte-sparkline`, `reynolds-zen`, `tufte-data`, `mckinsey-pyramid`, `case-study-star`, `executive-briefing-provocation`, `default-balanced`) + 5 compile-mode skills (`storytelling-style-library`, `story-from-outline`, `story-from-interview`, `story-from-transcript`, `story-from-deck`). Pick a style; bring your own outline, interview transcript, raw transcript, or even an existing deck to reverse-engineer into IR.
+- **MCP-driven Figma template-instance path.** No Figma Desktop install needed. No user-installed plugin. The extractor + Stage 2 renderer drive the Anthropic Figma MCP directly — clone named layout slides, populate via `setCharacters`, restore styling per the 8 Plugin API rules. Output is a real Figma Slides file you open in your browser.
+- **Deterministic preflight.** `CAPABILITIES.yaml` is the single source of truth for every skill, adapter, shared module, and architecture doc (49 entries). `uat/preflight.py` runs 8 checks (file existence, manifest coverage, UAT endpoint coverage, external binary detection, Figma architecture compliance, renderer loss-manifest compliance, visual regression gate, anonymity grep). Non-zero exit on any blocker. Stops architecture drift mechanically, not by trying harder.
+- **Visual-QA routine.** Continuous regression detection + auto-improvement. `tests/visual-qa/run_renders.py` matrix harness × baseline manifest × per-region SSIM diff × rules-based anomaly classifier × auto-remediation loop. Preflight BLOCKS on SSIM drift below baseline threshold. Built because correctness of visual artifacts can only be verified visually.
 
 ## What makes this different
 
@@ -23,7 +32,11 @@ This detection + remediation is the differentiated piece. The rest of the plugin
 ```
 Your story (audience, throughline, beats, evidence)
         │
-        ▼  [ story-compiler ]
+        ▼  [ story-compiler ] or one of:
+        │     [ story-from-outline | story-from-interview |
+        │       story-from-transcript | story-from-deck ]
+        │
+        ▼  [ storytelling-style-library ] — optional style overlay
         │
 Deck IR (YAML, validated against ir/schema.json)
         │
@@ -50,12 +63,23 @@ The wizard runs once, ingests your existing decks or templates, and produces a p
 Seven steps:
 
 1. **Discovery** — what do you have? Existing decks, an existing template, both, or starting fresh.
-2. **Classification** — for each file you point at, the wizard runs `template-classifier`. Verdict: `template | deck-with-implicit-pattern | mixed`, plus the signals that drove the verdict (layout diversity ratio, default-layout fraction, semantic richness of layout names, etc.).
+2. **Classification** — for each file you point at, the wizard runs `template-classifier`. Verdict: `template | deck-with-implicit-pattern | mixed`, plus the signals that drove the verdict.
 3. **Extraction or synthesis** — branches on the verdict. A real template goes straight to extraction; a deck-with-implicit-pattern goes through synthesis (cluster recurring patterns → derive layouts → emit a candidate template) and *then* extraction.
-4. **Validation** — `template-validator` audits the candidate against six structural criteria (layout catalog completeness, style hierarchy, master usage, color tokens, type tokens, orphan elements) and produces green/yellow/red findings with concrete remediation per finding.
-5. **Quality report** — you review the classifier diagnosis, the synthesizer's cluster summary (if invoked), and the validator findings together. Accept, iterate, or address findings in your source first.
+4. **Validation** — `template-validator` audits the candidate against six structural criteria with green/yellow/red findings + concrete remediation per finding.
+5. **Quality report** — you review the classifier diagnosis, the synthesizer's cluster summary (if invoked), and the validator findings together. Accept, iterate, or address findings in your source first. **If the verdict is `fail`, auto-remediation (`remediation-apply-pptx` / `remediation-apply-figma`) applies deterministic fixes (layout renames, theme alignment) and re-validates.**
 6. **Preferred output** — pick a default render target.
 7. **Persist** — the resulting profile lands in your config directory.
+
+## Bring your own story shape
+
+Beyond outline-mode, v0.2 adds four compile entry points so you don't have to write a markdown outline before you have a deck:
+
+- `story-from-outline` — the classic path; the compiler refuses to draft on missing audience / throughline / evidence anchor.
+- `story-from-interview` — conversational. The skill asks you the questions a structured interview would, builds the IR as you answer.
+- `story-from-transcript` — point it at a recorded talk transcript; the adapter surfaces throughline candidates, beat segments, metrics, and quotes for you to pick from.
+- `story-from-deck` — reverse-engineers an IR from an existing `.pptx`. Useful when the deck already exists and you want the durable story artifact.
+
+Apply a style on top of any of these via `storytelling-style-library`. Or skip styles and let the renderer use defaults.
 
 ## After setup
 
@@ -95,8 +119,6 @@ Enterprise pipeline has plateaued — four straight quarters flat at 8-10 deals.
 
 ## claim
 Three reasons the middle market is the next motion: market shape, sales cycle, competitive window.
-
-... [more beats] ...
 ```
 
 See `ir/examples/` for three full generic examples used as renderer test fixtures.
@@ -106,24 +128,32 @@ See `ir/examples/` for three full generic examples used as renderer test fixture
 | Skill | Purpose |
 |---|---|
 | `story-compiler` | Outline-mode markdown → Deck IR YAML. Refuses on missing audience / throughline / evidence anchor. |
-| `slide-ir-validator` | Validates an IR against the schema + 7 lint rules (missing speaker notes, layout/beat mismatch, throughline drift, etc.). |
+| `slide-ir-validator` | Validates an IR against the schema + 7 lint rules. |
 | `template-setup` | The first-run wizard. Orchestrates the other template-* skills. |
 | `template-classifier` | Detects whether a source is a template, a deck-with-implicit-pattern, or mixed. |
 | `template-synthesizer-pptx` | Clusters recurring slide patterns into a synthesized .pptx template. |
-| `template-synthesizer-figma` | Same, for Figma — drives the Figma MCP to create template frames in your file. |
+| `template-synthesizer-figma` | Same, for Figma — drives the MCP to create template frames in your file. |
 | `template-extractor-pptx` | Inspects a real .pptx template and emits the profile entry. |
-| `template-extractor-figma` | Same, for Figma. |
+| `template-extractor-figma` | Walks a Figma Slides template via MCP; identifies slides by shared plugin data. |
 | `template-validator` | Six-criteria structural quality check with green/yellow/red findings. |
+| `remediation-apply-pptx` | Auto-fix a failing .pptx template (layout rename + recommendations). |
+| `remediation-apply-figma` | Auto-fix a failing Figma template via MCP. |
 | `render-pptx` | IR + profile → .pptx + loss manifest. |
-| `render-figma` | IR + profile → per-slide YAML the Figma MCP publishes. |
+| `render-figma` | IR + profile → Figma Slides file via MCP template-instance pattern. |
+| `input-pdf` / `input-png` / `input-ppt` | Accept additional source formats. Legacy `.ppt` converted via LibreOffice. |
+| `visual-diff` / `iterate-to-parity` | Per-region SSIM + auto-remediation loop. |
+| `storytelling-style-library` | 8 starter styles + user-style precedence + `extends:` chain resolution. |
+| `story-from-outline` / `story-from-interview` / `story-from-transcript` / `story-from-deck` | Alternative compile entry points. |
+| `visual-qa-routine` | Continuous regression detection + auto-improvement. |
 
-Each skill has its own SKILL.md under `skills/`. The Python adapters under `adapters/` do the heavy algorithmic work — clustering, extraction, validation, rendering — and the skills wrap them with usage context.
+Each skill has its own SKILL.md under `skills/`. The Python adapters under `adapters/` do the heavy algorithmic work; the skills wrap them with usage context. `plugin/CAPABILITIES.yaml` is the authoritative manifest covering every skill + adapter + shared module + doc.
 
 ## Requirements
 
 - Cowork `>= 0.x`
 - Python `>= 3.10`
 - `python-pptx`, `pyyaml`, `jsonschema` (installed automatically on plugin install)
+- LibreOffice (only for `.ppt` legacy conversion via `input-ppt`)
 - Figma MCP (user-supplied credentials) for Figma rendering
 
 ## Loss manifests
@@ -144,9 +174,9 @@ For a typical render through a well-fitting template, you'd expect ~1 + N lossle
 
 ## Roadmap
 
-- **v0.1** — pptx + Figma renderers, full template setup workflow with detection + remediation, outline-mode story compiler.
-- **v0.2** — Google Slides renderer, transcript-mode and case-study-mode compilers, synthesizer v2 (shape embedding, similarity-thresholded clustering).
-- **v0.3** — visual generation hooks (image placeholders resolved to AI-generated images via a separate image MCP).
+- **v0.1** ✓ — pptx + Figma renderers, full template setup workflow with detection + remediation, outline-mode story compiler. Externally validated against 12 templates we didn't design.
+- **v0.2** ✓ — storytelling layer (8 styles + 5 compile-mode skills), MCP-driven Figma template-instance path (no Desktop / no user plugin), deterministic preflight system, visual-QA routine.
+- **v0.3** — Google Slides renderer; richer Figma Slides starter template with brand styling; image-placeholder resolution via image MCPs.
 
 ## License
 
