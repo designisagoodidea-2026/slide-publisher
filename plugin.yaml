@@ -1,6 +1,6 @@
 # slide-publisher — Cowork plugin manifest
 name: slide-publisher
-version: 0.1.0
+version: 0.2.0-dev
 display_name: Slide Publisher
 tagline: Story-aware slide generation across PowerPoint and Figma Slides.
 description: |
@@ -36,12 +36,12 @@ skills:
   - input-ppt                   # convert legacy .ppt → .pptx via LibreOffice
   - visual-diff                 # per-slide phash + SSIM, HTML side-by-side report
   - iterate-to-parity           # render→diff→adjust loop until visual convergence
-  # v0.2 (storytelling layer — landing in 0.2.0-dev)
-  # - storytelling-style-library
-  # - story-from-outline
-  # - story-from-interview
-  # - story-from-transcript
-  # - story-from-deck
+  # v0.2 — storytelling layer (landed in 0.2.0-dev)
+  - storytelling-style-library
+  - story-from-outline
+  - story-from-interview
+  - story-from-transcript
+  - story-from-deck
 
 mcps:
   required:
