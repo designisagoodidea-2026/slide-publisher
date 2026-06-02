@@ -55,7 +55,7 @@ except ImportError:
 # ---------------------------------------------------------------------------
 
 sys.path.insert(0, str(Path(__file__).parent))
-from _common import LossManifest, LossEntry, LAYOUT_FALLBACKS as _COMMON_FALLBACKS  # noqa: E402
+from _common import LossManifest, LossEntry, LAYOUT_FALLBACKS as _COMMON_FALLBACKS, check_title_overflow  # noqa: E402
 
 # Stub out the legacy class block so the remaining adapter code (which uses
 # LossManifest with template_path) keeps working. We map template_path → extra.
@@ -218,12 +218,21 @@ def resolve_layout(
     raise RuntimeError(f"No layouts available in the template at all.")
 
 
-def set_title(slide: Any, title: str, manifest: LossManifest, slide_id: str) -> None:
-    """Set the slide's title placeholder. If none, add an ANNOTATED entry."""
+def set_title(
+    slide: Any, title: str, manifest: LossManifest, slide_id: str,
+    intent: str = "claim_with_evidence",
+) -> None:
+    """Set the slide's title placeholder. If none, add an ANNOTATED entry.
+
+    Also runs a title-overflow check (v0.2.2): when the IR title exceeds the
+    layout intent's recommended character budget, the manifest gets an
+    ANNOTATED entry so users (and the visual-QA anomaly classifier) can
+    pre-empt cramped/wrapped/colliding rendering.
+    """
     if slide.shapes.title is not None:
         slide.shapes.title.text = title
+        check_title_overflow(title, intent, manifest, slide_id)
         return
-    # No title placeholder — drop the IR title and annotate
     manifest.add(
         "DROPPED", slide_id, "title",
         f"layout has no title placeholder; IR title '{title}' was dropped. "
@@ -463,60 +472,9 @@ def _split_evenly(items: list, n_chunks: int) -> list[list]:
     return out
 
 
-def _render_block_to_text(
-    kind: str, content: Any, manifest: LossManifest, slide_id: str, idx: int
-) -> str | None:
-    """Convert an IR body_block to a string. Records LOSSY/DROPPED as needed."""
-    if kind == "prose":
-        return str(content)
-    if kind == "bullets":
-        if isinstance(content, list):
-            return "\n".join(f"• {item}" for item in content)
-        return None
-    if kind == "metric":
-        if isinstance(content, dict):
-            label = content.get("label", "")
-            value = content.get("value", "")
-            unit = content.get("unit", "")
-            comparison = content.get("comparison", "")
-            parts = [f"{value} {unit}".strip() if unit else str(value), label]
-            line = " — ".join(p for p in parts if p)
-            if comparison:
-                line += f"\n  ({comparison})"
-            return line
-        return None
-    if kind == "quote":
-        if isinstance(content, dict):
-            text = content.get("text", "")
-            attribution = content.get("attribution", "")
-            out = f"“{text}”"
-            if attribution:
-                out += f"\n— {attribution}"
-            return out
-        return None
-    if kind == "image_placeholder":
-        manifest.add(
-            "LOSSY", slide_id, f"body_blocks[{idx}].kind=image_placeholder",
-            "image_placeholder rendered as caption text only; image content "
-            "is the user's responsibility post-render.",
-        )
-        if isinstance(content, dict):
-            return f"[IMAGE: {content.get('alt', '')}]\n{content.get('intent', '')}"
-        return "[IMAGE]"
-    if kind == "diagram_placeholder":
-        manifest.add(
-            "LOSSY", slide_id, f"body_blocks[{idx}].kind=diagram_placeholder",
-            "diagram_placeholder rendered as caption text only; diagram is "
-            "the user's responsibility post-render.",
-        )
-        if isinstance(content, dict):
-            return f"[DIAGRAM: {content.get('alt', '')}]\n{content.get('intent', '')}"
-        return "[DIAGRAM]"
-    manifest.add(
-        "DROPPED", slide_id, f"body_blocks[{idx}].kind={kind}",
-        f"unknown body_block kind '{kind}'; dropped.",
-    )
-    return None
+# Body-block text rendering moved to _common.render_block_to_text (v0.2.2).
+# Local alias preserved so existing call sites read cleanly.
+from _common import render_block_to_text as _render_block_to_text  # noqa: E402
 
 
 def set_speaker_notes(slide: Any, notes: str, manifest: LossManifest, slide_id: str) -> None:
@@ -583,7 +541,8 @@ def render(ir_path: Path, profile_path: Path, out_path: Path) -> LossManifest:
         layout = resolve_layout(prs, layout_map, intent, manifest, slide_id)
         slide = prs.slides.add_slide(layout)
 
-        set_title(slide, slide_def.get("title", ""), manifest, slide_id)
+        set_title(slide, slide_def.get("title", ""), manifest, slide_id,
+                  intent=slide_def.get("layout_intent", "claim_with_evidence"))
         populate_body(slide, slide_def.get("body_blocks", []), manifest, slide_id)
         set_speaker_notes(slide, slide_def.get("speaker_notes", ""), manifest, slide_id)
 

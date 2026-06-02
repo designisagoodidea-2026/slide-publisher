@@ -48,6 +48,130 @@ BODY_BLOCK_KINDS: list[str] = [
     "prose", "bullets", "metric", "quote", "image_placeholder", "diagram_placeholder",
 ]
 
+
+def render_block_to_text(
+    kind: str,
+    content: Any,
+    manifest=None,
+    slide_id: str = "",
+    idx: int = 0,
+) -> str | None:
+    """Render a single IR body_block to its text representation.
+
+    Single source of truth for text flattening, used by:
+      - pptx_renderer.populate_body — populates text frame placeholders.
+      - uat/server.py Figma payload converter — keeps cross-renderer text consistent.
+      - story_from_deck reverse-engineering — preview blocks as text.
+
+    The mapping is deterministic — same input always produces same string.
+    When `manifest` is supplied (must support `.add(category, slide_id, source,
+    reason)`), LOSSY/DROPPED entries are recorded for non-text kinds.
+
+    Returns None if the block can't be represented (manifest gets a DROPPED
+    entry in that case).
+    """
+    if kind == "prose":
+        return str(content) if content is not None else ""
+    if kind == "bullets":
+        if isinstance(content, list):
+            return "\n".join(f"• {item}" for item in content)
+        return None
+    if kind == "metric":
+        if isinstance(content, dict):
+            label = content.get("label", "")
+            value = content.get("value", "")
+            unit = content.get("unit", "")
+            comparison = content.get("comparison", "")
+            head = f"{value} {unit}".strip() if unit else str(value)
+            line = " — ".join(p for p in (head, label) if p)
+            if comparison:
+                line += f"\n  ({comparison})"
+            return line
+        return None
+    if kind == "quote":
+        if isinstance(content, dict):
+            text = content.get("text", "")
+            attribution = content.get("attribution", "")
+            out = f"“{text}”"
+            if attribution:
+                out += f"\n— {attribution}"
+            return out
+        return None
+    if kind == "image_placeholder":
+        if manifest is not None:
+            manifest.add(
+                "LOSSY", slide_id, f"body_blocks[{idx}].kind=image_placeholder",
+                "image_placeholder rendered as caption text only; image asset "
+                "is the user's responsibility post-render.",
+            )
+        if isinstance(content, dict):
+            return f"[IMAGE: {content.get('alt', '')}]\n{content.get('intent', '')}"
+        return "[IMAGE]"
+    if kind == "diagram_placeholder":
+        if manifest is not None:
+            manifest.add(
+                "LOSSY", slide_id, f"body_blocks[{idx}].kind=diagram_placeholder",
+                "diagram_placeholder rendered as caption text only; the diagram "
+                "is the user's responsibility post-render.",
+            )
+        if isinstance(content, dict):
+            return f"[DIAGRAM: {content.get('alt', '')}]\n{content.get('intent', '')}"
+        return "[DIAGRAM]"
+    if manifest is not None:
+        manifest.add(
+            "DROPPED", slide_id, f"body_blocks[{idx}].kind={kind}",
+            f"unknown body_block kind '{kind}'; dropped.",
+        )
+    return None
+
+
+# Title-length thresholds per layout intent — used by renderers (and the visual-QA
+# anomaly classifier) to detect when an IR title will overflow a tight title
+# placeholder. Conservative defaults; templates with bigger title bands won't
+# trigger. Override per profile if needed.
+TITLE_LENGTH_THRESHOLDS: dict[str, int] = {
+    "title": 60,
+    "section_break": 50,
+    "callout": 80,
+    "claim_with_evidence": 80,
+    "three_pillars": 70,
+    "comparison": 65,
+    "quote": 90,            # quotes can be long
+    "image_with_caption": 60,
+    "metrics": 60,
+    "timeline": 60,
+}
+
+
+def check_title_overflow(
+    title: str,
+    intent: str,
+    manifest=None,
+    slide_id: str = "",
+) -> bool:
+    """Check if a title exceeds the layout intent's recommended max length.
+
+    When `manifest` is supplied and the title overflows, an ANNOTATED entry
+    is recorded with the threshold + actual length + a remediation suggestion.
+
+    Returns True when overflow detected (caller can use the boolean for any
+    additional logic; the manifest entry is the user-facing signal).
+    """
+    if not title:
+        return False
+    threshold = TITLE_LENGTH_THRESHOLDS.get(intent, 80)
+    if len(title) <= threshold:
+        return False
+    if manifest is not None:
+        manifest.add(
+            "ANNOTATED", slide_id, "title_length",
+            f"title is {len(title)} chars; layout '{intent}' fits cleanly up to "
+            f"{threshold}. Consider shortening or picking a less-constrained "
+            f"intent to avoid wrapping/overflow in tight title placeholders "
+            f"(e.g., Atlas's speech-bubble title shape).",
+        )
+    return True
+
 ARC_VALUES: list[str] = [
     "problem-first", "situation-first", "provocation", "case-led",
     "reverse-chronological",

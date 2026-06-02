@@ -62,7 +62,14 @@ THRESHOLDS = {
     "color_delta_significant": 30, # magnitude > this = notable color shift
     "color_delta_major": 60,       # magnitude > this = big shift (theme miss)
     "variance_collapse_ratio": 0.3, # render variance / baseline variance < this = empty
-    "variance_spike_ratio": 1.5,    # render / baseline > this = busier (overflow)
+    "variance_spike_ratio": 1.3,    # render / baseline > this = busier (overflow)
+    # v0.2.2: dead-space rule — region has very low variance, suggesting an
+    # empty content slot the IR was supposed to fill.
+    "dead_space_variance": 200,     # absolute variance below this = dead
+    "dead_space_color_uniformity": 5,  # pixel std-dev across rgb < this = flat
+    # v0.2.2: body-region-shift rule — title variance drops AND body variance
+    # rises in tandem. The threshold is on the SUM signal across regions.
+    "body_shift_combined_signal": 0.4,  # |title_ratio_drop - 1| + |body_ratio_rise - 1|
 }
 
 
@@ -210,12 +217,88 @@ def rule_font_substitution(diff: dict, ctx: dict) -> list[dict]:
     return []
 
 
+def rule_body_region_shift(diff: dict, ctx: dict) -> list[dict]:
+    """Paired signal: title region variance drops AND body region variance rises.
+
+    Captures the exact failure mode the v0.2.1 walkthrough surfaced — title
+    overflow into the body region, then "fixed" so body content moved DOWN to
+    its proper home. The classic title_overflow rule needed SSIM to fire; this
+    one works on per-region variance alone, so it degrades gracefully when
+    scikit-image isn't available.
+    """
+    title = _get_region(diff, "title")
+    body = _get_region(diff, "body")
+    if not title or not body:
+        return []
+    t_a = title.get("variance_a", 0)
+    t_b = title.get("variance_b", 0)
+    b_a = body.get("variance_a", 0)
+    b_b = body.get("variance_b", 0)
+    if t_a <= 0 or b_a <= 0:
+        return []
+    title_ratio = t_b / max(t_a, 1)
+    body_ratio = b_b / max(b_a, 1)
+    # Title region got cleaner (ratio < 1) AND body region got busier (ratio > 1)
+    if title_ratio < 0.9 and body_ratio > 1.1:
+        combined = (1 - title_ratio) + (body_ratio - 1)
+        if combined >= THRESHOLDS["body_shift_combined_signal"]:
+            return [{
+                "rule": "body_region_shift",
+                "region": "title+body",
+                "severity": "high" if combined > 1.0 else "medium",
+                "finding": (f"Title-region variance dropped {title_ratio:.2f}× and "
+                            f"body-region variance rose {body_ratio:.2f}× — body "
+                            f"content shifted regions (often the signature of a "
+                            f"title-overflow fix or a layout binding change)."),
+                "recommended_fix": "Confirm the body content lands in the body "
+                                   "placeholder. If this is a regression from a "
+                                   "previous render, investigate the layout-map "
+                                   "binding or the renderer's placeholder choice.",
+                "deterministic_fix": False,
+                "fix_payload": {"action": "review_layout_binding"},
+            }]
+    return []
+
+
+def rule_dead_space(diff: dict, ctx: dict) -> list[dict]:
+    """Region has very low variance AND uniform color — likely empty content slot.
+
+    The exact failure mode from the executive-briefing × Madison slide 7 walkthrough:
+    Picture with Caption layout's right half is dead because the renderer dropped
+    the prose body block. The classifier needs to flag dead structural regions
+    where IR content was destined.
+    """
+    findings = []
+    for r in diff.get("regions", []):
+        name = r.get("region")
+        vb = r.get("variance_b", 0)
+        delta = r.get("mean_color_delta", {})
+        if vb < THRESHOLDS["dead_space_variance"]:
+            findings.append({
+                "rule": "dead_space",
+                "region": name,
+                "severity": "medium",
+                "finding": (f"{name.capitalize()} region of render is nearly flat "
+                            f"(variance {vb:.0f}) — likely an empty structural "
+                            f"placeholder the IR was supposed to fill (image slot, "
+                            f"caption slot, or second column)."),
+                "recommended_fix": "Check the renderer's loss manifest for "
+                                   "DROPPED entries in this slide. Body blocks may "
+                                   "not be binding to the layout's placeholder slots.",
+                "deterministic_fix": False,
+                "fix_payload": {"action": "review_loss_manifest"},
+            })
+    return findings
+
+
 RULES = [
     rule_title_overflow,
     rule_missing_fill,
     rule_empty_body,
     rule_missing_decoration,
     rule_font_substitution,
+    rule_body_region_shift,    # v0.2.2
+    rule_dead_space,           # v0.2.2
 ]
 
 

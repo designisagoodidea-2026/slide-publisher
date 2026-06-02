@@ -12,6 +12,28 @@ All notable changes to slide-publisher are documented here. Format follows [Keep
 - Live structural checks for Figma in `template-validator` (`style_hierarchy`, `orphan_elements`-equivalent).
 - Richer Figma Slides starter template (current minimal starter is task #100).
 
+## [0.2.2] — 2026-06-02
+
+Patch. Centralizes body-block text rendering in `_common.py` (closes the pptx/figma metric formatting inconsistency surfaced during visual QA). Adds title-length overflow detection. Two new visual-QA anomaly classifier rules (`body_region_shift` + `dead_space`) catch the exact failure modes from the executive-briefing × Madison walkthrough.
+
+### Added
+
+- **`_common.render_block_to_text(kind, content, manifest, slide_id, idx)`** — single source of truth for IR body_block → text flattening. Replaces the private `_render_block_to_text` in `pptx_renderer`; future renderers and the UAT Figma payload converter pick up the same mapping.
+- **`_common.check_title_overflow(title, intent, manifest, slide_id)`** + **`TITLE_LENGTH_THRESHOLDS`** dict — per-intent character budgets (title=60, section_break=50, callout=80, comparison=65, etc.). `pptx_renderer.set_title` invokes the check on every render; ANNOTATED loss entries surface when titles exceed threshold with a remediation suggestion.
+- **`rule_body_region_shift`** in `visual_anomaly_diagnose.py` — fires when title-region variance drops AND body-region variance rises in tandem (the exact signature of a title-overflow case). Works without SSIM, so it degrades gracefully when scikit-image isn't installed.
+- **`rule_dead_space`** in `visual_anomaly_diagnose.py` — fires when a region's render variance is nearly flat, indicating an empty structural placeholder (image slot, caption slot, second column) the IR was supposed to fill. Catches the silent-content-loss case.
+
+### Changed
+
+- `variance_spike_ratio` threshold tuned 1.5 → 1.3 (existing `title_overflow` rule was missing real-world cases by a hair).
+
+### Closes
+
+- Task #98 — centralize body-block-to-text rendering in `_common.py`.
+- Task #99 — title-length warning in `pptx_renderer` for fixed-bubble layouts.
+- Task #111 — tune anomaly classifier thresholds + body_region_shift rule.
+- Task #112 — classifier rule for dead-space.
+
 ## [0.2.1] — 2026-06-02
 
 Patch. Fixes the silent-content-loss + body-overflow bugs in `adapters/pptx_renderer.py` for multi-placeholder layouts (Comparison, Picture with Caption, etc.). Surfaced during visual QA of the executive-briefing IR rendered against the Madison theme.
@@ -151,7 +173,8 @@ After-fix results: 7 pass + 2 warn out of 9 native .pptx files (excluding a Powe
 - Bullet styling and metric-as-chart rendering deferred to v0.2.
 - Clustering in both synthesizers is exact-match on quantized signature; similarity-thresholded clustering is v0.2.
 
-[Unreleased]: https://github.com/designisagoodidea-2026/slide-publisher/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/designisagoodidea-2026/slide-publisher/compare/v0.2.2...HEAD
+[0.2.2]: https://github.com/designisagoodidea-2026/slide-publisher/releases/tag/v0.2.2
 [0.2.1]: https://github.com/designisagoodidea-2026/slide-publisher/releases/tag/v0.2.1
 [0.2.0]: https://github.com/designisagoodidea-2026/slide-publisher/releases/tag/v0.2.0
 [0.1.0]: https://github.com/designisagoodidea-2026/slide-publisher/releases/tag/v0.1.0
