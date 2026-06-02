@@ -43,6 +43,13 @@ except ImportError:
     print("ERROR: pyyaml missing. pip install pyyaml", file=sys.stderr)
     sys.exit(2)
 
+# Anomaly classifier — consume its findings to drive deterministic fixes
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+try:
+    from visual_anomaly_diagnose import diagnose as classify_anomalies
+except Exception:
+    classify_anomalies = None  # graceful degradation; v0.1 loop still runs
+
 
 # Same fallback chain as the renderer
 LAYOUT_FALLBACKS: dict[str, list[str]] = {
@@ -148,6 +155,51 @@ def adjust_profile(profile: dict[str, Any], diagnosis: dict[str, Any]) -> tuple[
     }
 
 
+def apply_deterministic_fix(ir: dict[str, Any], anomaly: dict[str, Any],
+                            slide_idx: int) -> dict[str, Any] | None:
+    """Apply one auto-remediator fix derived from a classifier finding.
+    Returns the audit entry, or None if the fix isn't deterministic / failed.
+    Mutates IR in place when the fix applies to it.
+    """
+    if not anomaly.get("deterministic_fix"):
+        return None
+    payload = anomaly.get("fix_payload", {})
+    action = payload.get("action")
+    slides = ir.get("slides", [])
+    if slide_idx >= len(slides):
+        return None
+    slide = slides[slide_idx]
+
+    if action == "shorten_ir_title":
+        # Trim the IR title to the max_chars_hint, preserving word boundaries.
+        max_chars = payload.get("max_chars_hint", 32)
+        current = slide.get("title", "")
+        if len(current) <= max_chars:
+            return {"applied": False, "reason": "title already short enough"}
+        # Truncate at word boundary
+        truncated = current[:max_chars]
+        last_space = truncated.rfind(" ")
+        if last_space > max_chars * 0.6:
+            truncated = truncated[:last_space]
+        truncated = truncated.rstrip() + "…"
+        slide["title"] = truncated
+        return {
+            "applied": True,
+            "action": action,
+            "field": "slides[].title",
+            "before": current,
+            "after": truncated,
+            "rationale": anomaly.get("finding", ""),
+        }
+
+    # Other actions (review_*) are non-deterministic; just log
+    return {
+        "applied": False,
+        "action": action,
+        "reason": f"action '{action}' is non-deterministic — surface for human review",
+    }
+
+
 def iterate(input_pngs: list[Path], ir_path: Path, profile_path: Path,
             out_dir: Path, max_iterations: int, parity_target: float) -> IterationLog:
     log = IterationLog(
@@ -186,16 +238,41 @@ def iterate(input_pngs: list[Path], ir_path: Path, profile_path: Path,
             log.iterations.append(entry)
             break
 
-        # 4. Diagnose + adjust
+        # 4. Diagnose + adjust — TWO-LEVEL strategy:
+        #    a) Run anomaly classifier on the lowest-parity pair's per-region diff.
+        #       Apply any deterministic fix it surfaces (e.g., shorten title).
+        #    b) If no deterministic fix applies, fall back to v0.1 layout swap.
         diag = diagnose_lowest_pair(diff, ir)
         if not diag:
             entry["status"] = "no_diagnosis_possible"
             log.iterations.append(entry)
             break
-        profile, adjustment = adjust_profile(profile, diag)
+        slide_idx = diag.get("slide_idx", 0)
+        per_pair = diff.get("per_pair", [])
+        applied_fixes = []
+        anomalies_seen = []
+        if classify_anomalies and slide_idx < len(per_pair):
+            cls = classify_anomalies(per_pair[slide_idx])
+            anomalies_seen = cls.get("anomalies", [])
+            for an in anomalies_seen:
+                fix_entry = apply_deterministic_fix(ir, an, slide_idx)
+                if fix_entry and fix_entry.get("applied"):
+                    applied_fixes.append(fix_entry)
+                    break  # one fix per iteration — re-render to evaluate
+        entry["anomalies"] = anomalies_seen
+        entry["applied_fixes"] = applied_fixes
         entry["diagnosis"] = diag
+        if applied_fixes:
+            # IR mutated; persist for the next iteration's render step
+            ir_path = iter_dir / "ir.yaml"
+            ir_path.write_text(yaml.safe_dump(ir, sort_keys=False))
+            entry["status"] = "iterating_via_deterministic_fix"
+            log.iterations.append(entry)
+            continue
+        # Fallback: try the v0.1 layout-fallback swap on the profile
+        profile, adjustment = adjust_profile(profile, diag)
         entry["adjustment"] = adjustment
-        entry["status"] = "iterating"
+        entry["status"] = "iterating_via_layout_swap"
         log.iterations.append(entry)
 
         if adjustment.get("adjustment") == "no_op":

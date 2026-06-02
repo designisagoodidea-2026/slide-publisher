@@ -23,7 +23,12 @@ HITS=$(
     --exclude-dir=.git \
     --exclude-dir=.githooks \
     --exclude-dir=__pycache__ \
+    --exclude-dir=runs \
+    --exclude-dir=baselines \
     --exclude="*.pyc" \
+    --exclude="*.tmp" \
+    --exclude="*.pdf" \
+    --exclude="*.pptx" \
     || true
 )
 

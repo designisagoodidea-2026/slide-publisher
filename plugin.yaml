@@ -1,6 +1,6 @@
 # slide-publisher — Cowork plugin manifest
 name: slide-publisher
-version: 0.2.0-dev
+version: 0.2.0
 display_name: Slide Publisher
 tagline: Story-aware slide generation across PowerPoint and Figma Slides.
 description: |
@@ -42,6 +42,8 @@ skills:
   - story-from-interview
   - story-from-transcript
   - story-from-deck
+  # v0.2 — visual-QA routine (continuous regression + auto-remediation)
+  - visual-qa-routine
 
 mcps:
   required:

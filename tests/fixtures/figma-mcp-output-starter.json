@@ -1,0 +1,58 @@
+{
+  "file_key": "JiUQfvrMe7fl7cHRLR0DGm",
+  "extractor_version": "0.2.0-dev",
+  "slide_templates": [
+    {"node_id": "4:3", "intent": "title", "title_text": "title", "title_node_id": "4:4", "body_node_id": "4:5", "image_node_id": null, "text_nodes": [
+      {"node_id": "4:4", "name": "TITLE", "characters": "{Title}", "size_pt": 72, "family": "Inter", "style": "Bold"},
+      {"node_id": "4:5", "name": "BODY", "characters": "{Subtitle / one-line setup}", "size_pt": 28, "family": "Inter", "style": "Regular"}
+    ]},
+    {"node_id": "4:6", "intent": "section_break", "title_text": "section_break", "title_node_id": "4:7", "body_node_id": null, "image_node_id": null, "text_nodes": [
+      {"node_id": "4:7", "name": "TITLE", "characters": "{Section title}", "size_pt": 80, "family": "Inter", "style": "Bold"}
+    ]},
+    {"node_id": "4:8", "intent": "claim_with_evidence", "title_text": "claim_with_evidence", "title_node_id": "4:9", "body_node_id": "4:10", "image_node_id": null, "text_nodes": [
+      {"node_id": "4:9", "name": "TITLE", "characters": "{Title}", "size_pt": 56, "family": "Inter", "style": "Bold"},
+      {"node_id": "4:10", "name": "BODY", "characters": "• {Claim point 1}\n• {Claim point 2}\n• {Supporting evidence}", "size_pt": 32, "family": "Inter", "style": "Regular"}
+    ]},
+    {"node_id": "4:11", "intent": "three_pillars", "title_text": "three_pillars", "title_node_id": "4:12", "body_node_id": "4:13", "image_node_id": null, "text_nodes": [
+      {"node_id": "4:12", "name": "TITLE", "characters": "{Title}", "size_pt": 56, "family": "Inter", "style": "Bold"},
+      {"node_id": "4:13", "name": "BODY", "characters": "{Column 1}    |    {Column 2}    |    {Column 3}", "size_pt": 24, "family": "Inter", "style": "Regular"}
+    ]},
+    {"node_id": "4:14", "intent": "comparison", "title_text": "comparison", "title_node_id": "4:15", "body_node_id": "4:16", "image_node_id": null, "text_nodes": [
+      {"node_id": "4:15", "name": "TITLE", "characters": "{Title}", "size_pt": 56, "family": "Inter", "style": "Bold"},
+      {"node_id": "4:16", "name": "BODY", "characters": "Before:\n{Old state}\n\nAfter:\n{New state}", "size_pt": 26, "family": "Inter", "style": "Regular"}
+    ]},
+    {"node_id": "4:17", "intent": "quote", "title_text": "quote", "title_node_id": "4:18", "body_node_id": "4:19", "image_node_id": null, "text_nodes": [
+      {"node_id": "4:18", "name": "TITLE", "characters": "{Title}", "size_pt": 48, "family": "Inter", "style": "Bold"},
+      {"node_id": "4:19", "name": "BODY", "characters": "— {Attribution}", "size_pt": 22, "family": "Inter", "style": "Regular"}
+    ]},
+    {"node_id": "4:20", "intent": "image_with_caption", "title_text": "image_with_caption", "title_node_id": "4:21", "body_node_id": "4:23", "image_node_id": "4:22", "text_nodes": [
+      {"node_id": "4:21", "name": "TITLE", "characters": "{Title}", "size_pt": 48, "family": "Inter", "style": "Bold"},
+      {"node_id": "4:23", "name": "BODY", "characters": "{Caption text}", "size_pt": 24, "family": "Inter", "style": "Regular"}
+    ]},
+    {"node_id": "4:24", "intent": "metrics", "title_text": "metrics", "title_node_id": "4:25", "body_node_id": "4:26", "image_node_id": null, "text_nodes": [
+      {"node_id": "4:25", "name": "TITLE", "characters": "{Title}", "size_pt": 56, "family": "Inter", "style": "Bold"},
+      {"node_id": "4:26", "name": "BODY", "characters": "{Metric label}: {value}{unit}\n{Comparison context}", "size_pt": 28, "family": "Inter", "style": "Regular"}
+    ]},
+    {"node_id": "4:27", "intent": "timeline", "title_text": "timeline", "title_node_id": "4:28", "body_node_id": "4:29", "image_node_id": null, "text_nodes": [
+      {"node_id": "4:28", "name": "TITLE", "characters": "{Title}", "size_pt": 56, "family": "Inter", "style": "Bold"},
+      {"node_id": "4:29", "name": "BODY", "characters": "{Phase 1} → {Phase 2} → {Phase 3} → {Phase 4}", "size_pt": 24, "family": "Inter", "style": "Regular"}
+    ]},
+    {"node_id": "4:30", "intent": "callout", "title_text": "callout", "title_node_id": "4:31", "body_node_id": "4:32", "image_node_id": null, "text_nodes": [
+      {"node_id": "4:31", "name": "TITLE", "characters": "{Big statement}", "size_pt": 88, "family": "Inter", "style": "Bold"},
+      {"node_id": "4:32", "name": "BODY", "characters": "{Subtext if any}", "size_pt": 32, "family": "Inter", "style": "Regular"}
+    ]}
+  ],
+  "color_styles": [],
+  "text_styles": [
+    {"family": "Inter", "style": "Bold", "size_pt": 72, "weight": 700, "name": "Inter Bold 72pt"},
+    {"family": "Inter", "style": "Regular", "size_pt": 28, "weight": 400, "name": "Inter Regular 28pt"},
+    {"family": "Inter", "style": "Bold", "size_pt": 80, "weight": 700, "name": "Inter Bold 80pt"},
+    {"family": "Inter", "style": "Bold", "size_pt": 56, "weight": 700, "name": "Inter Bold 56pt"},
+    {"family": "Inter", "style": "Regular", "size_pt": 32, "weight": 400, "name": "Inter Regular 32pt"},
+    {"family": "Inter", "style": "Regular", "size_pt": 24, "weight": 400, "name": "Inter Regular 24pt"},
+    {"family": "Inter", "style": "Regular", "size_pt": 26, "weight": 400, "name": "Inter Regular 26pt"},
+    {"family": "Inter", "style": "Bold", "size_pt": 48, "weight": 700, "name": "Inter Bold 48pt"},
+    {"family": "Inter", "style": "Regular", "size_pt": 22, "weight": 400, "name": "Inter Regular 22pt"},
+    {"family": "Inter", "style": "Bold", "size_pt": 88, "weight": 700, "name": "Inter Bold 88pt"}
+  ]
+}

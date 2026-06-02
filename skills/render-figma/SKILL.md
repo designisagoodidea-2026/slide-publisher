@@ -5,7 +5,9 @@ description: Render a validated Deck IR into Figma Slides via the Figma MCP, usi
 
 # render-figma
 
-Two-stage rendering: (1) the adapter translates IR + profile into per-slide YAML; (2) the skill drives the Figma MCP to clone templates and populate content. The 8 Plugin API rules apply to stage 2.
+Two-stage rendering: (1) the adapter translates IR + profile into per-slide YAML; (2) the skill drives the Anthropic-hosted Figma MCP (`use_figma`) to clone templates and populate content. The 8 Plugin API rules apply to stage 2.
+
+> **2026-06-01 architecture lock.** Stage 2 runs through the **Anthropic-hosted Figma MCP** (`mcp__<server>__use_figma`), not through a user-installed Figma plugin and not through Figma Desktop. The MCP executes the Plugin API JavaScript server-side; the user needs only a Figma account (any tier) — no Desktop install, no plugin script to install. The earlier "open Figma Desktop, install our plugin script" architecture is retired.
 
 ## When this skill triggers
 
@@ -35,6 +37,18 @@ slide-id-map.json sidecar (cached for future renders)
 ```
 
 The adapter is pure Python — no MCP dependency. The skill is the MCP driver — describes the Plugin API patterns and post-render verification.
+
+### Stage 2 in detail (template-instance pattern)
+
+Given a `templates.figma` profile entry with `file_key` + `layout_map` (intent → slide_id of the named template slide), Stage 2's `use_figma` payload:
+
+1. **Pre-loads every font** the IR will use, looked up from the template's existing text nodes (Rule 4). Cannot call `setCharacters` on an unloaded font.
+2. **For each IR slide:** finds the named template slide in the deck's first row by its slide.name, *clones the template slide as a new slide* in the deck row, then walks the cloned slide's TEXT nodes (shallow only — Rule 1, no findAll). Locates the title and body nodes by their pre-existing `{Placeholder}` characters (Rule 6: identify by original text, not by traversal order).
+3. **Calls `setCharacters`** on each placeholder text node with IR content. Restores the text node's typography (font, size, weight, fills) after `setCharacters` per Rule 5 — `setCharacters` resets these otherwise.
+4. **Single Plugin API call per render** wrapping all slide cloning + population (Rule 8). Smaller batches require multiple MCP round-trips, each of which is a full JS execution context init.
+5. **Verifies post-render** by reading back each cloned slide's title text and comparing to the IR-supplied title; mismatches go to the loss manifest as `ANNOTATED` entries.
+
+The clone-and-populate pattern preserves the template's master typography, theme colors, and layout positioning automatically — output looks like an instance of the template, not raw text on blank canvas. This is what differentiates the render-figma path from a "create text nodes from scratch" approach (which was attempted 2026-06-01 and produced unreadable output before being abandoned).
 
 ## Pre-flight
 

@@ -49,3 +49,7 @@ env/
 # Cowork / Claude session artifacts
 .cowork/
 .claude/
+
+# Visual QA ephemeral outputs (LibreOffice tmp files carry host license info)
+tests/visual-qa/runs/
+tests/visual-qa/baselines/

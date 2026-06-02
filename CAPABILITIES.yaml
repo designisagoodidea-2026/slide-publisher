@@ -1,0 +1,1190 @@
+# ============================================================================
+# CAPABILITIES.yaml — single source of truth for slide-publisher capabilities
+# ============================================================================
+#
+# Purpose
+# -------
+# Every skill (under plugin/skills/), every adapter (under plugin/adapters/),
+# and every architecture doc (under plugin/docs/) gets ONE entry below. The
+# manifest names purpose, dependencies (binaries, MCPs, Python libs, internal),
+# user-facing invariants (lifted from SKILL.md prose), the matching
+# architecture doc, and the current UAT exposure state.
+#
+# Why this exists
+# ---------------
+# The repo's recurring failure mode is shipping features (input-ppt support,
+# auto-remediation, Figma rendering) without re-reading the SKILL.md prose that
+# already governs them. The UAT wrapper at uat/server.py then exposes things
+# wrong: skipped dependencies (LibreOffice surprise), bypassed architectures
+# (raw-text Figma instead of template-instance), or not exposed at all
+# (auto-remediation was missing until a user complaint). A preflight check
+# consuming this file mechanically prevents that drift.
+#
+# Schema (one entry per capability)
+# ---------------------------------
+#   - name:                <kebab-case skill OR snake_case adapter>
+#     type:                skill | adapter | shared | doc
+#     purpose:             <one-line, ≤140 chars>
+#     file_path:           <path relative to plugin/>
+#     skill_md_path:       <SKILL.md path if backed by a skill>
+#     architecture_doc:    <relative path under docs/ if applicable>
+#     dependencies:
+#       external_binaries: []
+#       mcps:              []
+#       python_libraries:  []
+#       plugin_internal:   []
+#     user_facing_invariants: []
+#     uat_exposed:         yes | no | partial
+#     uat_exposure_notes:  <one-line description of HOW or WHAT'S MISSING>
+#
+# Generated 2026-06-01, hand-curated. See uat/preflight.py for the consumer.
+# ============================================================================
+
+
+# ============================================================================
+# SHARED MODULE
+# ============================================================================
+
+- name: _common
+  type: shared
+  purpose: Single source of truth for IR catalogs, pattern dicts, token roles, LossManifest, FormatAdapter Protocol, layout-map heuristics, severity helpers.
+  file_path: adapters/_common.py
+  skill_md_path: null
+  architecture_doc: null
+  dependencies:
+    external_binaries: []
+    mcps: []
+    python_libraries: []
+    plugin_internal: []
+  user_facing_invariants:
+    - "Nothing here is pptx-specific or figma-specific — gslides (v0.2) must slot in cleanly via the FormatAdapter Protocol."
+    - "Anonymity: no organization patterns, no user-identifying defaults."
+    - "Every per-format adapter imports IR catalogs (LAYOUT_INTENTS, BEATS, BODY_BLOCK_KINDS) from here — never duplicate."
+  uat_exposed: no
+  uat_exposure_notes: "Imported indirectly by every adapter the UAT shells out to. Not directly addressable."
+
+
+# ============================================================================
+# DOCS (architecture references — invariants lifted from these)
+# ============================================================================
+
+- name: figma-plugin-api-rules
+  type: doc
+  purpose: The 8 non-negotiable Plugin API rules every Figma-touching skill must obey. Violations cause MCP timeouts.
+  file_path: docs/FIGMA-PLUGIN-API-RULES.md
+  skill_md_path: null
+  architecture_doc: null
+  dependencies:
+    external_binaries: []
+    mcps: []
+    python_libraries: []
+    plugin_internal: []
+  user_facing_invariants:
+    - "Rule 1: Never `findAll` on a slide."
+    - "Rule 2: Identify templates by title text, not by slide name or page number."
+    - "Rule 3: Use the shallow-navigation pattern (slide.children[0].children[0])."
+    - "Rule 4: Pre-load fonts before reading/writing characters."
+    - "Rule 5: Restore styling after setCharacters."
+    - "Rule 6: Verify title text after every read/clone."
+    - "Rule 7: Use Figma Desktop, not the browser."
+    - "Rule 8: Batch one Plugin API call per file inspection / per deck."
+  uat_exposed: no
+  uat_exposure_notes: "Reference doc only. Should be cited by uat/preflight.py when validating any figma path."
+
+- name: loss-manifest
+  type: doc
+  purpose: Authoritative spec for the LOSSLESS / LOSSY / DROPPED / ANNOTATED categories emitted by every renderer.
+  file_path: docs/LOSS-MANIFEST.md
+  skill_md_path: null
+  architecture_doc: null
+  dependencies:
+    external_binaries: []
+    mcps: []
+    python_libraries: []
+    plugin_internal: []
+  user_facing_invariants:
+    - "Every render emits <deck>.loss.md and <deck>.loss.json beside the output."
+    - "Nothing is lost silently — every dropped or substituted field appears in the manifest."
+    - "A manifest with 0 DROPPED for a typical IR is suspicious — story-frame fields should always show up as DROPPED."
+  uat_exposed: partial
+  uat_exposure_notes: "/api/render returns loss_md and loss_json fields. Server reads them when files exist."
+
+- name: anonymity-note
+  type: doc
+  purpose: Plugin-wide anonymity posture statement, referenced from every SKILL.md.
+  file_path: docs/ANONYMITY-NOTE.md
+  skill_md_path: null
+  architecture_doc: null
+  dependencies:
+    external_binaries: []
+    mcps: []
+    python_libraries: []
+    plugin_internal: []
+  user_facing_invariants:
+    - "No personal names, no organization references, no industry-specific patterns ship in this plugin."
+    - "Pre-push hook at plugin/.githooks/pre-push enforces the rule at the repo boundary."
+    - "Defaults are generic (Inter typeface + neutral brand-shaped colors)."
+  uat_exposed: no
+  uat_exposure_notes: "Not user-visible; enforced at repo push time."
+
+- name: validation-methodology
+  type: doc
+  purpose: External-validation methodology — how the model was tested against Microsoft themes + 9 web-sourced .pptx files.
+  file_path: docs/VALIDATION.md
+  skill_md_path: null
+  architecture_doc: null
+  dependencies:
+    external_binaries: []
+    mcps: []
+    python_libraries: []
+    plugin_internal: []
+  user_facing_invariants:
+    - "Tests written against self-designed fixtures only prove the code does what was designed, not whether the design is right."
+    - "External validation against industry-ground-truth templates (Microsoft themes) is required before claiming model correctness."
+  uat_exposed: no
+  uat_exposure_notes: "Reference doc only."
+
+
+# ============================================================================
+# SKILLS — orchestration / setup
+# ============================================================================
+
+- name: template-setup
+  type: skill
+  purpose: One-time install wizard — discovery → intake → classify/extract/synthesize → validate → quality report → preferred output → persist profile.yaml.
+  file_path: skills/template-setup/SKILL.md
+  skill_md_path: skills/template-setup/SKILL.md
+  architecture_doc: docs/FIGMA-PLUGIN-API-RULES.md
+  dependencies:
+    external_binaries: []
+    mcps:
+      - figma
+    python_libraries:
+      - pyyaml
+    plugin_internal:
+      - template-classifier
+      - template-extractor-pptx
+      - template-extractor-figma
+      - template-synthesizer-pptx
+      - template-synthesizer-figma
+      - template-validator
+  user_facing_invariants:
+    - "Seven steps, each with a clear input/output. Skip a step only when the prior step's output makes it unnecessary."
+    - "Always surface the classifier diagnosis to the user verbatim — this is the value-add of detection."
+    - "On `deck-with-implicit-pattern`: must ask explicit permission before synthesis (synthesis writes a new file)."
+    - "Profile must validate against template-profile/schema.json before reporting success."
+    - "Re-running setup over an existing profile must offer update / start-over / cancel (and archive on start-over)."
+    - "If Figma MCP isn't granted but user supplies a file key: refuse and surface the grant command."
+  uat_exposed: partial
+  uat_exposure_notes: "UAT's /api/prepare collapses classify+extract+validate(+remediate) into one shot; the seven-step orchestrator dialog (discovery, source intake prompts, preferred-output choice, profile persist) is not surfaced. Profile writes to /tmp scratch, not ~/.cowork/plugins/slide-publisher/profile.yaml."
+
+- name: storytelling-style-library
+  type: skill
+  purpose: Manage storytelling styles — list built-in + user styles, validate against schema, resolve `extends:` chain with user-precedence.
+  file_path: skills/storytelling-style-library/SKILL.md
+  skill_md_path: skills/storytelling-style-library/SKILL.md
+  architecture_doc: null
+  dependencies:
+    external_binaries: []
+    mcps: []
+    python_libraries:
+      - pyyaml
+      - jsonschema
+    plugin_internal:
+      - style_loader
+  user_facing_invariants:
+    - "User styles in ~/.cowork/plugins/slide-publisher/styles/*.yaml win over plugin-shipped styles of the same name."
+    - "`extends: <parent-name>` merges parent first, then child overrides."
+    - "Style schema enforced via styles/schema.json (Draft 2020-12)."
+  uat_exposed: no
+  uat_exposure_notes: "Not exposed. UAT has no style-selection UI and uat/server.py shells out only to renderer/validator/classifier/extractor/remediator."
+
+
+# ============================================================================
+# SKILLS — story compilers (v0.1 + v0.2)
+# ============================================================================
+
+- name: story-compiler
+  type: skill
+  purpose: v0.1 outline → Deck IR YAML. Refuses to draft when audience, throughline, or evidence anchor is missing.
+  file_path: skills/story-compiler/SKILL.md
+  skill_md_path: skills/story-compiler/SKILL.md
+  architecture_doc: null
+  dependencies:
+    external_binaries: []
+    mcps: []
+    python_libraries:
+      - pyyaml
+    plugin_internal:
+      - slide-ir-validator
+  user_facing_invariants:
+    - "Refuses to draft when audience / throughline / evidence_anchor is missing — asks instead."
+    - "Outline-mode only in v0.1; transcript and case-study modes deferred."
+    - "Output must conform to ir/schema.json (JSON Schema 2020-12)."
+    - "Speaker notes required (lint) on claim / evidence / tension / resolution beats."
+    - "Never invents audience or throughline — these are user-supplied or skill refuses."
+  uat_exposed: no
+  uat_exposure_notes: "Not exposed. UAT lets user upload a pre-built IR (/api/upload-ir) but offers no story-compile path. Should be reachable from Step 2 if user uploads outline.md instead of pre-baked IR."
+
+- name: story-from-outline
+  type: skill
+  purpose: v0.2 successor to story-compiler — same outline contract, now style-aware (accepts `--style` flag or outline frontmatter `style:`).
+  file_path: skills/story-from-outline/SKILL.md
+  skill_md_path: skills/story-from-outline/SKILL.md
+  architecture_doc: null
+  dependencies:
+    external_binaries: []
+    mcps: []
+    python_libraries:
+      - pyyaml
+      - jsonschema
+    plugin_internal:
+      - storytelling-style-library
+      - style_loader
+      - slide-ir-validator
+  user_facing_invariants:
+    - "Frontmatter `style:` wins over CLI flag if both set."
+    - "Style choice does NOT appear in the IR — styles are compile-time, not artifact-time."
+    - "Refusal patterns inherited from v0.1 story-compiler (audience/throughline/anchor required)."
+    - "Honors style.beats.<beat>.min/max counts when allocating slides."
+  uat_exposed: no
+  uat_exposure_notes: "Not exposed. No style-aware compile path in UAT."
+
+- name: story-from-interview
+  type: skill
+  purpose: Conversational story elicitation — one focused question per turn, style-aware sequence, accumulate answers into an IR.
+  file_path: skills/story-from-interview/SKILL.md
+  skill_md_path: skills/story-from-interview/SKILL.md
+  architecture_doc: null
+  dependencies:
+    external_binaries: []
+    mcps: []
+    python_libraries: []
+    plugin_internal:
+      - storytelling-style-library
+      - slide-ir-validator
+  user_facing_invariants:
+    - "One question per turn — do not flood the user."
+    - "Style affects the question sequence (TED, Tufte, McKinsey, Zen, etc. each get a recipe)."
+    - "Conversational skill with NO Python adapter — runs entirely in chat."
+    - "If user gives one-word answers across multiple questions, slow down — don't push to compile a half-empty IR."
+  uat_exposed: no
+  uat_exposure_notes: "Not exposed — conversational skill with no adapter. UAT is a web pipeline, not a chat surface; this skill has no UAT analog."
+
+- name: story-from-transcript
+  type: skill
+  purpose: Convert a spoken transcript or long-form prose into a Deck IR YAML. Refuses to fabricate the throughline.
+  file_path: skills/story-from-transcript/SKILL.md
+  skill_md_path: skills/story-from-transcript/SKILL.md
+  architecture_doc: null
+  dependencies:
+    external_binaries: []
+    mcps: []
+    python_libraries:
+      - pyyaml
+    plugin_internal:
+      - storytelling-style-library
+      - story_from_transcript
+      - slide-ir-validator
+  user_facing_invariants:
+    - "Surface 2-3 throughline candidates and ask user to pick — refuses to fabricate."
+    - "Transcript <200 words → refuses, redirects to story-from-interview."
+    - "Processes the transcript locally — never sends outside the user's session."
+    - "Saves <deck>.source-transcript.txt alongside the IR for provenance."
+  uat_exposed: no
+  uat_exposure_notes: "Not exposed."
+
+- name: story-from-deck
+  type: skill
+  purpose: Reverse-engineer a Deck IR from an existing .pptx (or Figma file) — extract titles, body, notes, infer beats, throughline candidate.
+  file_path: skills/story-from-deck/SKILL.md
+  skill_md_path: skills/story-from-deck/SKILL.md
+  architecture_doc: docs/FIGMA-PLUGIN-API-RULES.md
+  dependencies:
+    external_binaries: []
+    mcps:
+      - figma
+    python_libraries:
+      - python-pptx
+      - pyyaml
+    plugin_internal:
+      - storytelling-style-library
+      - story_from_deck
+  user_facing_invariants:
+    - "Source deck <4 slides → refuses; treat as story-from-interview input instead."
+    - "Surface inferred beat per slide and ask user to confirm or reclassify before producing the IR."
+    - "Figma path runs via shallow-navigation pattern (FIGMA-PLUGIN-API-RULES.md), not findAll."
+    - "Save <deck>.reverse-engineering.md sidecar naming uncertain inferences."
+  uat_exposed: no
+  uat_exposure_notes: "Not exposed."
+
+- name: slide-ir-validator
+  type: skill
+  purpose: Schema-validate + lint a Deck IR YAML. Renderers refuse to consume IR that fails --strict mode.
+  file_path: skills/slide-ir-validator/SKILL.md
+  skill_md_path: skills/slide-ir-validator/SKILL.md
+  architecture_doc: null
+  dependencies:
+    external_binaries: []
+    mcps: []
+    python_libraries:
+      - pyyaml
+      - jsonschema
+    plugin_internal: []
+  user_facing_invariants:
+    - "Schema validation is a hard fail — renderers depend on the structure being correct."
+    - "Lint has 7 rules (LINT-001..LINT-007) at error/warn/info severity."
+    - "--strict promotes warns to errors; renderers must run --strict pre-flight."
+    - "Schema authoritative source is ir/schema.json — don't duplicate schema rules in lint."
+  uat_exposed: no
+  uat_exposure_notes: "Not exposed as a discrete endpoint. UAT's /api/upload-ir does a minimal `deck` key check but does NOT run schema validation or lint. Should be invoked between /api/upload-ir and /api/render."
+
+
+# ============================================================================
+# SKILLS — template classification / synthesis (pre-extraction)
+# ============================================================================
+
+- name: template-classifier
+  type: skill
+  purpose: Classify a .pptx (or Figma file) as `template`, `deck-with-implicit-pattern`, or `mixed` — routes setup into the right branch.
+  file_path: skills/template-classifier/SKILL.md
+  skill_md_path: skills/template-classifier/SKILL.md
+  architecture_doc: docs/FIGMA-PLUGIN-API-RULES.md
+  dependencies:
+    external_binaries: []
+    mcps:
+      - figma
+    python_libraries:
+      - python-pptx
+    plugin_internal:
+      - template_classifier
+  user_facing_invariants:
+    - "Output template-ness score is heuristic, not authoritative — surface confidence alongside verdict."
+    - "Always surface the diagnosis to the user verbatim. This is the value-add of detection."
+    - "Thresholds: ≥0.65 template, ≤0.35 deck-with-implicit-pattern, otherwise mixed."
+    - "Figma classification runs as a Plugin API recipe (no Python adapter for the figma path)."
+  uat_exposed: yes
+  uat_exposure_notes: "Exposed via /api/classify (pptx only) and folded into /api/prepare. Figma classification path not exposed."
+
+- name: template-synthesizer-pptx
+  type: skill
+  purpose: deck-with-implicit-pattern .pptx → synthesized template (renamed layouts + JSON report of canonical patterns + tokens).
+  file_path: skills/template-synthesizer-pptx/SKILL.md
+  skill_md_path: skills/template-synthesizer-pptx/SKILL.md
+  architecture_doc: null
+  dependencies:
+    external_binaries: []
+    mcps: []
+    python_libraries:
+      - python-pptx
+    plugin_internal:
+      - template_synthesizer_pptx
+      - template-extractor-pptx
+      - template-validator
+  user_facing_invariants:
+    - "Writes a NEW .pptx (does not modify the user's source deck)."
+    - "v0.1 carries layout NAMES only — canonical shape positions documented in JSON report, not embedded."
+    - "Exact-match clustering for v0.1 (quantization makes near-matches collapse)."
+    - "Document v0.1 caveats upfront when surfacing synthesizer output."
+  uat_exposed: no
+  uat_exposure_notes: "Not exposed. UAT's /api/prepare runs classifier+extract+validate+remediate but never branches into synthesis when classifier returns deck-with-implicit-pattern."
+
+- name: template-synthesizer-figma
+  type: skill
+  purpose: deck-with-implicit-pattern Figma file → new "Templates" page with synthesized frames via Figma MCP (3-stage walk → plan → create).
+  file_path: skills/template-synthesizer-figma/SKILL.md
+  skill_md_path: skills/template-synthesizer-figma/SKILL.md
+  architecture_doc: docs/FIGMA-PLUGIN-API-RULES.md
+  dependencies:
+    external_binaries: []
+    mcps:
+      - figma
+    python_libraries: []
+    plugin_internal:
+      - template_synthesizer_figma
+      - template-extractor-figma
+      - template-validator
+  user_facing_invariants:
+    - "WRITES TO THE USER'S FILE — must ask explicit yes before proceeding."
+    - "8 Plugin API rules apply (FIGMA-PLUGIN-API-RULES.md): no findAll, shallow nav, pre-load fonts, batch one call."
+    - "Stage 1 walk produces JSON; Stage 2 adapter clusters offline; Stage 3 MCP creates the frames."
+    - "Adapter is pure Python (offline testable); MCP stages bracket it."
+    - "Figma Desktop must be open with the target file active (Rule 7)."
+  uat_exposed: no
+  uat_exposure_notes: "Not exposed. UAT has no MCP integration; Figma synthesis cannot be reached."
+
+
+# ============================================================================
+# SKILLS — template extraction
+# ============================================================================
+
+- name: template-extractor-pptx
+  type: skill
+  purpose: .pptx → candidate template-profile entry — heuristic layout-map inference, color/font token extraction from theme1.xml.
+  file_path: skills/template-extractor-pptx/SKILL.md
+  skill_md_path: skills/template-extractor-pptx/SKILL.md
+  architecture_doc: null
+  dependencies:
+    external_binaries: []
+    mcps: []
+    python_libraries:
+      - python-pptx
+    plugin_internal:
+      - template_extractor_pptx
+  user_facing_invariants:
+    - "Output is a CANDIDATE template profile — the user reviews and edits before locking."
+    - "Surface `_findings` to the user verbatim during template-setup's quality report."
+    - "Use --strip-debug when persisting to profile.yaml (omits _inspected_layouts and _findings)."
+    - "Heuristic — pattern dictionary matches English-language layout names; non-English needs explicit layout-map overrides."
+    - "Does not touch the user's deck content; only inspects master/layout structure."
+  uat_exposed: yes
+  uat_exposure_notes: "Exposed via /api/extract and folded into /api/prepare. Server wraps the JSON entry as a full profile.yaml in /tmp scratch."
+
+- name: template-extractor-figma
+  type: skill
+  purpose: Figma file → candidate template-profile entry via Figma MCP walk + Python normalization.
+  file_path: skills/template-extractor-figma/SKILL.md
+  skill_md_path: skills/template-extractor-figma/SKILL.md
+  architecture_doc: docs/FIGMA-PLUGIN-API-RULES.md
+  dependencies:
+    external_binaries: []
+    mcps:
+      - figma
+    python_libraries: []
+    plugin_internal:
+      - template_extractor_figma
+  user_facing_invariants:
+    - "8 Plugin API rules apply — adapter takes pre-walked JSON; the skill drives the MCP."
+    - "Refuse if Figma MCP not granted — surface `cowork plugin grant slide-publisher --mcp figma`."
+    - "Figma Desktop must be open with the target file active (Rule 7)."
+    - "Identify templates by title text, NOT by slide name (Rule 2) — title_text drives the layout_map."
+    - "Only one Figma file per profile in v0.1; multi-file design systems deferred."
+  uat_exposed: no
+  uat_exposure_notes: "Not exposed. Figma extraction requires live MCP access not present in the UAT process. UAT's /api/render figma path SYNTHESIZES a stub `figma` branch from the pptx layout_map (file_key = 'UAT_NO_FIGMA_FILE_CONFIGURED') rather than calling this skill."
+
+
+# ============================================================================
+# SKILLS — validation
+# ============================================================================
+
+- name: template-validator
+  type: skill
+  purpose: 6-criterion structural quality check (layout_catalog_completeness, style_hierarchy, master_usage, color/type_tokens, orphan_elements).
+  file_path: skills/template-validator/SKILL.md
+  skill_md_path: skills/template-validator/SKILL.md
+  architecture_doc: null
+  dependencies:
+    external_binaries: []
+    mcps: []
+    python_libraries:
+      - python-pptx
+    plugin_internal:
+      - template_validator
+  user_facing_invariants:
+    - "Renderers must run --strict mode before consuming a template. A template that fails validation does not render."
+    - "Verdict is the worst severity across findings: pass / warn / fail."
+    - "Exit 2 means dependency missing (python-pptx) — distinct from validation failure."
+    - "v0.1 Figma validator runs only 3 criteria (layout_catalog_completeness, color_tokens, type_tokens) — live structural checks deferred to v0.2."
+    - "Surface findings + remediation per finding; user fixes the source file."
+  uat_exposed: yes
+  uat_exposure_notes: "Exposed via /api/validate (pptx) and folded into /api/prepare. Figma validation path not exposed."
+
+
+# ============================================================================
+# SKILLS — remediation (auto-fix failed validators)
+# ============================================================================
+
+- name: remediation-apply-pptx
+  type: skill
+  purpose: Automated remediation for a .pptx that the validator was unhappy with — applies low-risk layout renames; surfaces palette/typeface recommendations; defers high-risk fixes.
+  file_path: skills/remediation-apply-pptx/SKILL.md
+  skill_md_path: skills/remediation-apply-pptx/SKILL.md
+  architecture_doc: null
+  dependencies:
+    external_binaries: []
+    mcps: []
+    python_libraries:
+      - python-pptx
+    plugin_internal:
+      - template-validator
+      - remediation_apply_pptx
+      - template-extractor-pptx
+  user_facing_invariants:
+    - "Apply / Recommend / Defer split is explicit in the audit log — users know exactly what was automated."
+    - "Audit log records before vs after validator verdict and reason for every change deferred."
+    - "Layout rename is the v0.1 sweet spot (low risk, high impact); theme XML edits are deferred to v0.2."
+    - "After remediation, re-run validator AND re-run extractor on the remediated output."
+    - "If re-validation still fails, surface deferred findings to the user with a 'next step is manual' message."
+  uat_exposed: yes
+  uat_exposure_notes: "Exposed via /api/remediate; auto-invoked by /api/prepare when initial verdict is 'fail'. Audit log returned in the response. (Added late after user complaint that it was missing.)"
+
+- name: remediation-apply-figma
+  type: skill
+  purpose: Auto-remediation for Figma — Python adapter plans the fixes; Stage 2 MCP applies them (create styles, rename frames).
+  file_path: skills/remediation-apply-figma/SKILL.md
+  skill_md_path: skills/remediation-apply-figma/SKILL.md
+  architecture_doc: docs/FIGMA-PLUGIN-API-RULES.md
+  dependencies:
+    external_binaries: []
+    mcps:
+      - figma
+    python_libraries: []
+    plugin_internal:
+      - template-validator
+      - remediation_apply_figma
+      - template-extractor-figma
+  user_facing_invariants:
+    - "WRITES TO THE USER'S FILE — must ask explicit yes before proceeding (creates styles, renames frames)."
+    - "8 Plugin API rules apply, especially Rules 4 (pre-load fonts), 5 (restore styling), 6 (verify title text), 8 (batch one call)."
+    - "Stage 1 planner is pure Python (offline testable); Stage 2 is MCP-executed."
+    - "Audit log reflects what actually got applied, not just what was planned."
+    - "Re-walk + re-extract + re-validate after Stage 2 to capture post-remediation state."
+  uat_exposed: no
+  uat_exposure_notes: "Not exposed. No Figma remediation path in UAT."
+
+
+# ============================================================================
+# SKILLS — renderers
+# ============================================================================
+
+- name: render-pptx
+  type: skill
+  purpose: Render validated Deck IR + template profile → .pptx + loss manifest (md + json).
+  file_path: skills/render-pptx/SKILL.md
+  skill_md_path: skills/render-pptx/SKILL.md
+  architecture_doc: docs/LOSS-MANIFEST.md
+  dependencies:
+    external_binaries: []
+    mcps: []
+    python_libraries:
+      - python-pptx
+      - pyyaml
+    plugin_internal:
+      - slide-ir-validator
+      - template-validator
+      - pptx_renderer
+  user_facing_invariants:
+    - "Pre-flight: IR must be schema-valid (slide-ir-validator --strict); template profile must pass template-validator --strict --format pptx."
+    - "Renderer never silently picks a layout — every substitution shows up in the loss manifest."
+    - "Layout resolution: layout_map → fallback chain → claim_with_evidence → first available."
+    - "Manifest categories: LOSSLESS, LOSSY, DROPPED, ANNOTATED (mirror translation-engine convention)."
+    - "A manifest with 0 DROPPED is suspicious — story-frame fields should always show up as DROPPED."
+    - "Renderer fails fast (exit 2) if python-pptx or pyyaml missing."
+  uat_exposed: yes
+  uat_exposure_notes: "Exposed via /api/render with format=pptx (default). Loss manifest returned in the response."
+
+- name: render-figma
+  type: skill
+  purpose: Render validated Deck IR + figma profile → per-slide YAML envelope + loss manifest; Stage 2 drives Figma MCP to clone templates and populate.
+  file_path: skills/render-figma/SKILL.md
+  skill_md_path: skills/render-figma/SKILL.md
+  architecture_doc:
+    - docs/FIGMA-PLUGIN-API-RULES.md
+    - docs/LOSS-MANIFEST.md
+  dependencies:
+    external_binaries: []
+    mcps:
+      - figma
+    python_libraries:
+      - pyyaml
+    plugin_internal:
+      - slide-ir-validator
+      - template-validator
+      - figma_yaml_emitter
+  user_facing_invariants:
+    - "Stage 1 (Python emitter) is pure transformation, testable offline."
+    - "Stage 2 (Figma MCP) must follow all 8 Plugin API rules — clone by template_node_id, verify title text after clone (Rule 6), restore styling after setCharacters (Rule 5)."
+    - "Pre-flight requires Figma MCP granted AND Figma Desktop open with the target file active (Rule 7)."
+    - "Architecture is template-instance (clone template_node_id, then populate) — NOT raw text emission."
+    - "Slide-id-map.json sidecar persists IR slide id → Figma node id mapping for downstream tools."
+    - "Stage 2 appends LOSSY entries for clone-verification mismatches and ANNOTATED entries for publisher-added nodes."
+  uat_exposed: partial
+  uat_exposure_notes: "DRIFT: /api/render with format=figma calls figma_yaml_emitter.py (Stage 1) only. Stage 2 (MCP clone-and-populate per template-instance architecture) is NOT executed; UAT synthesizes a stub figma profile branch with file_key='UAT_NO_FIGMA_FILE_CONFIGURED' from the pptx layout_map. User receives raw-text per-slide YAML rather than instantiated Figma templates. See task #91 'Figma path v2: template-instance architecture via MCP'."
+
+
+# ============================================================================
+# SKILLS — input adapters (non-pptx sources)
+# ============================================================================
+
+- name: input-pdf
+  type: skill
+  purpose: Accept a PDF (URL or local path) as a deck source — extract text + positions, optionally render pages to PNG for visual diffing.
+  file_path: skills/input-pdf/SKILL.md
+  skill_md_path: skills/input-pdf/SKILL.md
+  architecture_doc: null
+  dependencies:
+    external_binaries:
+      - poppler
+    mcps: []
+    python_libraries:
+      - pdfplumber
+      - pdf2image
+    plugin_internal:
+      - input_adapter_pdf
+  user_facing_invariants:
+    - "--render-pngs needed when downstream is visual-diff; omit otherwise."
+    - "Without pdf2image, classification + synthesis still run; visual-diff doesn't."
+    - "Without pdfplumber, no text extraction is possible (downstream loses signal)."
+    - "Emits the same slide-shape JSON the Figma MCP walk produces — downstream treats PDF as just another input format."
+    - "poppler binary required for pdf2image (brew install poppler / apt-get install poppler-utils)."
+  uat_exposed: no
+  uat_exposure_notes: "Not exposed. UAT only accepts .pptx and .ppt uploads — PDF input is not surfaced."
+
+- name: input-png
+  type: skill
+  purpose: Accept one or more PNG screenshots as a deck source. Optional OCR via Tesseract; otherwise emits image paths for visual-diff.
+  file_path: skills/input-png/SKILL.md
+  skill_md_path: skills/input-png/SKILL.md
+  architecture_doc: null
+  dependencies:
+    external_binaries:
+      - tesseract
+    mcps: []
+    python_libraries:
+      - Pillow
+      - pytesseract
+    plugin_internal:
+      - input_adapter_png
+  user_facing_invariants:
+    - "Without OCR the adapter still emits image paths + dimensions — visual-diff works, classifier/synthesizer see empty shapes."
+    - "Tesseract binary required for OCR (brew install tesseract / apt-get install tesseract-ocr)."
+    - "Pillow is the only hard requirement."
+  uat_exposed: no
+  uat_exposure_notes: "Not exposed."
+
+- name: input-ppt
+  type: skill
+  purpose: Convert legacy .ppt → .pptx via LibreOffice headless; downstream pptx pipeline runs as normal.
+  file_path: skills/input-ppt/SKILL.md
+  skill_md_path: skills/input-ppt/SKILL.md
+  architecture_doc: null
+  dependencies:
+    external_binaries:
+      - libreoffice
+      - soffice
+    mcps: []
+    python_libraries: []
+    plugin_internal:
+      - input_adapter_ppt
+  user_facing_invariants:
+    - "LibreOffice MUST be detected on the host before .ppt uploads are accepted — refuse with install instructions if missing."
+    - "Lossy conversion: fonts may substitute, complex shapes may flatten, theme colors may not survive. Surface a lossiness warning on every .ppt conversion."
+    - "Recommend re-save in PowerPoint as .pptx before re-uploading for best results."
+    - "Detects binary at common paths (libreoffice, soffice, /Applications/LibreOffice.app/...)."
+  uat_exposed: yes
+  uat_exposure_notes: "Exposed via /api/upload (auto-invoked when uploaded file has .ppt extension). Server's find_libreoffice() mirrors the adapter's lookup. Refusal with install instructions implemented. Warning surfaced. (This is the LibreOffice-surprise case that was previously broken.)"
+
+
+# ============================================================================
+# SKILLS — diff and convergence loop
+# ============================================================================
+
+- name: visual-diff
+  type: skill
+  purpose: Per-slide phash + SSIM similarity between input reference deck PNGs and rendered output, HTML side-by-side report.
+  file_path: skills/visual-diff/SKILL.md
+  skill_md_path: skills/visual-diff/SKILL.md
+  architecture_doc: null
+  dependencies:
+    external_binaries:
+      - libreoffice
+      - soffice
+    mcps: []
+    python_libraries:
+      - Pillow
+      - imagehash
+      - scikit-image
+      - numpy
+      - pdf2image
+    plugin_internal:
+      - visual_diff
+  user_facing_invariants:
+    - "LibreOffice required for .pptx → PDF → PNG rendering of the output side."
+    - "If both imagehash and scikit-image are missing, HTML report still emits without numeric parity scores."
+    - "Aggregate parity = mean of SSIM column (or phash_similarity fallback) — the convergence metric for iterate-to-parity."
+  uat_exposed: no
+  uat_exposure_notes: "Not exposed."
+
+- name: iterate-to-parity
+  type: skill
+  purpose: render → diff → diagnose → adjust loop until aggregate parity ≥ target (default 0.85 SSIM) or max_iterations (default 5).
+  file_path: skills/iterate-to-parity/SKILL.md
+  skill_md_path: skills/iterate-to-parity/SKILL.md
+  architecture_doc: null
+  dependencies:
+    external_binaries:
+      - libreoffice
+      - soffice
+    mcps: []
+    python_libraries:
+      - pyyaml
+      - Pillow
+      - imagehash
+      - scikit-image
+    plugin_internal:
+      - render-pptx
+      - visual-diff
+      - iterate_to_parity
+  user_facing_invariants:
+    - "Termination conditions: Converged / Exhausted adjustments / No diagnosis possible / Max iterations — all logged."
+    - "v0.1 adjustments: swap offending slide's layout_intent mapping to next-best fallback (same chain renderer uses)."
+    - "Don't use when reference and IR represent fundamentally different stories — no rendering will match."
+    - "Each iteration lands in /tmp/iterate/iter-NN/ with profile.yaml + rendered.pptx + diff/."
+  uat_exposed: no
+  uat_exposure_notes: "Not exposed."
+
+
+# ============================================================================
+# ADAPTERS — Python scripts (most are backed by a skill above)
+# ============================================================================
+
+- name: template_classifier
+  type: adapter
+  purpose: pptx classifier — emits classification + confidence + signals + diagnosis JSON.
+  file_path: adapters/template_classifier.py
+  skill_md_path: skills/template-classifier/SKILL.md
+  architecture_doc: null
+  dependencies:
+    external_binaries: []
+    mcps: []
+    python_libraries:
+      - python-pptx
+    plugin_internal:
+      - _common
+  user_facing_invariants:
+    - "CLI: python adapters/template_classifier.py <pptx_path>"
+    - "Exits 2 if python-pptx missing."
+    - "Returns JSON on stdout — UAT parses directly."
+  uat_exposed: yes
+  uat_exposure_notes: "/api/classify shells out directly."
+
+- name: template_extractor_pptx
+  type: adapter
+  purpose: pptx → candidate profile entry. Reads theme1.xml for colors + fonts; heuristic layout-map inference.
+  file_path: adapters/template_extractor_pptx.py
+  skill_md_path: skills/template-extractor-pptx/SKILL.md
+  architecture_doc: null
+  dependencies:
+    external_binaries: []
+    mcps: []
+    python_libraries:
+      - python-pptx
+    plugin_internal:
+      - _common
+  user_facing_invariants:
+    - "CLI flags: --out <path>, --strip-debug."
+    - "--strip-debug omits _inspected_layouts and _findings — use when persisting to profile.yaml."
+    - "Exits 2 if python-pptx missing."
+  uat_exposed: yes
+  uat_exposure_notes: "/api/extract shells out with --strip-debug; server wraps as full profile.yaml."
+
+- name: template_extractor_figma
+  type: adapter
+  purpose: Normalize Figma MCP walk JSON → template-profile entry (layout_map, style_tokens, quality_score).
+  file_path: adapters/template_extractor_figma.py
+  skill_md_path: skills/template-extractor-figma/SKILL.md
+  architecture_doc: docs/FIGMA-PLUGIN-API-RULES.md
+  dependencies:
+    external_binaries: []
+    mcps: []
+    python_libraries: []
+    plugin_internal:
+      - _common
+  user_facing_invariants:
+    - "Takes pre-walked JSON (file_key, slide_templates, color_styles, text_styles) as input."
+    - "Pure Python normalization — no MCP dependency at the adapter layer."
+    - "Skill drives the MCP walk; adapter post-processes."
+  uat_exposed: no
+  uat_exposure_notes: "Not exposed."
+
+- name: template_synthesizer_pptx
+  type: adapter
+  purpose: deck-with-implicit-pattern .pptx → synthesized .pptx (renamed layouts) + JSON report (clusters, suggested layout_map, tokens).
+  file_path: adapters/template_synthesizer_pptx.py
+  skill_md_path: skills/template-synthesizer-pptx/SKILL.md
+  architecture_doc: null
+  dependencies:
+    external_binaries: []
+    mcps: []
+    python_libraries:
+      - python-pptx
+    plugin_internal:
+      - _common
+  user_facing_invariants:
+    - "CLI: --out <synth.pptx> --report <report.json>."
+    - "v0.1 carries layout NAMES only; shape positions in JSON report, not in .pptx layouts."
+    - "Exact-match clustering on quantized signatures (0.5-inch grid)."
+  uat_exposed: no
+  uat_exposure_notes: "Not exposed. /api/prepare does not route to synthesis when classifier returns deck-with-implicit-pattern."
+
+- name: template_synthesizer_figma
+  type: adapter
+  purpose: Cluster Figma slides + emit MCP creation plan. Pure-Python middle stage between MCP walk and MCP create.
+  file_path: adapters/template_synthesizer_figma.py
+  skill_md_path: skills/template-synthesizer-figma/SKILL.md
+  architecture_doc: docs/FIGMA-PLUGIN-API-RULES.md
+  dependencies:
+    external_binaries: []
+    mcps: []
+    python_libraries: []
+    plugin_internal:
+      - _common
+  user_facing_invariants:
+    - "Takes pre-walked JSON; emits an mcp_creation_plan the skill's Stage 3 executes."
+    - "Adapter does NO MCP work — clustering algorithm runs offline."
+  uat_exposed: no
+  uat_exposure_notes: "Not exposed."
+
+- name: template_validator
+  type: adapter
+  purpose: 6-criterion template quality check (pptx) or 3-criterion (figma); pass/warn/fail verdict + per-finding remediation.
+  file_path: adapters/template_validator.py
+  skill_md_path: skills/template-validator/SKILL.md
+  architecture_doc: null
+  dependencies:
+    external_binaries: []
+    mcps: []
+    python_libraries:
+      - python-pptx
+    plugin_internal:
+      - _common
+  user_facing_invariants:
+    - "CLI: --format pptx|figma, --strict, --profile-entry <path>, --out <path>."
+    - "Exit 0 = pass (or warn in default), Exit 1 = fail (or any non-green in --strict), Exit 2 = dependency missing."
+    - "Renderer pre-flight must use --strict."
+  uat_exposed: yes
+  uat_exposure_notes: "/api/validate shells out with --format pptx (figma path not exposed). Server tolerates exit 1 on yellow under --strict."
+
+- name: remediation_apply_pptx
+  type: adapter
+  purpose: Apply low-risk pptx fixes (primarily layout renames); emit audit log markdown + JSON sidecar; re-run validator before/after.
+  file_path: adapters/remediation_apply_pptx.py
+  skill_md_path: skills/remediation-apply-pptx/SKILL.md
+  architecture_doc: null
+  dependencies:
+    external_binaries: []
+    mcps: []
+    python_libraries:
+      - python-pptx
+    plugin_internal:
+      - _common
+      - template_validator
+  user_facing_invariants:
+    - "CLI: <template_path> --out <remediated_path> [--validator-report <path>]."
+    - "If validator hasn't been run yet, the adapter runs it transparently."
+    - "Emits <out>.audit.md and <out>.audit.json alongside remediated .pptx."
+    - "Audit log records every change applied, every change deferred (with reason), and validator verdict before vs. after."
+  uat_exposed: yes
+  uat_exposure_notes: "/api/remediate shells out; auto-invoked by /api/prepare on fail. Audit json + md returned in response."
+
+- name: remediation_apply_figma
+  type: adapter
+  purpose: Compute fix plan for a Figma file based on walk JSON + validator report; emit MCP creation plan for skill Stage 2.
+  file_path: adapters/remediation_apply_figma.py
+  skill_md_path: skills/remediation-apply-figma/SKILL.md
+  architecture_doc: docs/FIGMA-PLUGIN-API-RULES.md
+  dependencies:
+    external_binaries: []
+    mcps: []
+    python_libraries: []
+    plugin_internal:
+      - _common
+  user_facing_invariants:
+    - "Inputs: walk.json + validator.json."
+    - "Outputs fixes_to_apply array grouped by fix_type — Stage 2 of the skill dispatches on each type."
+    - "Adapter is pure Python; MCP execution is the skill's responsibility."
+  uat_exposed: no
+  uat_exposure_notes: "Not exposed."
+
+- name: pptx_renderer
+  type: adapter
+  purpose: IR + profile → .pptx + loss manifest (md + json). Layout resolution via layout_map → fallback chain → claim_with_evidence default.
+  file_path: adapters/pptx_renderer.py
+  skill_md_path: skills/render-pptx/SKILL.md
+  architecture_doc: docs/LOSS-MANIFEST.md
+  dependencies:
+    external_binaries: []
+    mcps: []
+    python_libraries:
+      - python-pptx
+      - pyyaml
+    plugin_internal:
+      - _common
+  user_facing_invariants:
+    - "CLI: --ir <ir.yaml> --profile <profile.yaml> --out <out.pptx>."
+    - "Loss manifest always emitted beside the .pptx — never optional."
+    - "Exits 2 if python-pptx or pyyaml missing."
+    - "Does NOT run pre-flight validators — orchestrator's responsibility."
+  uat_exposed: yes
+  uat_exposure_notes: "/api/render format=pptx shells out; returns output_path, loss_md, loss_json."
+
+- name: figma_yaml_emitter
+  type: adapter
+  purpose: Stage 1 of render-figma — IR + profile → per-slide YAML envelope + loss manifest. Pure transformation; testable offline.
+  file_path: adapters/figma_yaml_emitter.py
+  skill_md_path: skills/render-figma/SKILL.md
+  architecture_doc:
+    - docs/FIGMA-PLUGIN-API-RULES.md
+    - docs/LOSS-MANIFEST.md
+  dependencies:
+    external_binaries: []
+    mcps: []
+    python_libraries:
+      - pyyaml
+    plugin_internal:
+      - _common
+  user_facing_invariants:
+    - "CLI: --ir <ir.yaml> --profile <profile.yaml> --out <out.yaml>."
+    - "Adapter is Stage 1 ONLY — does NOT produce the final Figma deck."
+    - "Output is consumed by Stage 2 (MCP-driven clone-and-populate); see render-figma/SKILL.md."
+    - "Pre-flight requires templates.figma branch in the profile."
+  uat_exposed: partial
+  uat_exposure_notes: "DRIFT: /api/render format=figma calls this emitter and STOPS — UAT does not execute Stage 2 (MCP-driven template-instance population). User receives Stage-1 YAML descriptor rather than rendered Figma slides. See task #91. Per render-figma/SKILL.md, the architecture is template-instance via MCP, not raw-text emission."
+
+- name: visual_diff
+  type: adapter
+  purpose: Render output .pptx → PNGs via LibreOffice→PDF→pdf2image; compute per-slide phash + SSIM; emit HTML report + JSON summary.
+  file_path: adapters/visual_diff.py
+  skill_md_path: skills/visual-diff/SKILL.md
+  architecture_doc: null
+  dependencies:
+    external_binaries:
+      - libreoffice
+      - soffice
+    mcps: []
+    python_libraries:
+      - Pillow
+      - imagehash
+      - scikit-image
+      - numpy
+      - pdf2image
+    plugin_internal: []
+  user_facing_invariants:
+    - "CLI: --input-pngs ... --output-pptx <path> --out-dir <dir>."
+    - "Gracefully degrades: if Pillow/imagehash/scikit-image missing, HTML report still emits without numeric scores."
+    - "LibreOffice (libreoffice or soffice binary) needed to render output .pptx → PDF → PNG."
+  uat_exposed: no
+  uat_exposure_notes: "Not exposed."
+
+- name: iterate_to_parity
+  type: adapter
+  purpose: Loop the render → visual-diff → adjust → re-render cycle until parity target hit or max_iterations exhausted.
+  file_path: adapters/iterate_to_parity.py
+  skill_md_path: skills/iterate-to-parity/SKILL.md
+  architecture_doc: null
+  dependencies:
+    external_binaries:
+      - libreoffice
+      - soffice
+    mcps: []
+    python_libraries:
+      - pyyaml
+    plugin_internal:
+      - pptx_renderer
+      - visual_diff
+  user_facing_invariants:
+    - "CLI: --input-pngs ... --ir <ir.yaml> --profile <profile.yaml> --out-dir <dir> --max-iterations N --parity-target 0.85."
+    - "Each iteration lands in <out-dir>/iter-NN/ with profile.yaml + rendered.pptx + diff/."
+    - "Adjustment heuristic v0.1: swap offending slide's layout_intent to next-best fallback."
+  uat_exposed: no
+  uat_exposure_notes: "Not exposed."
+
+- name: input_adapter_pdf
+  type: adapter
+  purpose: PDF (URL or path) → slide-shape JSON (same as Figma walk); optional per-page PNG via pdf2image.
+  file_path: adapters/input_adapter_pdf.py
+  skill_md_path: skills/input-pdf/SKILL.md
+  architecture_doc: null
+  dependencies:
+    external_binaries:
+      - poppler
+    mcps: []
+    python_libraries:
+      - pdfplumber
+      - pdf2image
+    plugin_internal: []
+  user_facing_invariants:
+    - "CLI: <pdf-url-or-path> --out <json> [--render-pngs]."
+    - "Gracefully degrades: without pdf2image, omits png_path fields (visual-diff won't work but classifier/synthesis still can)."
+    - "URL input auto-downloads to a temp file."
+  uat_exposed: no
+  uat_exposure_notes: "Not exposed."
+
+- name: input_adapter_png
+  type: adapter
+  purpose: PNG screenshot(s) → slide-shape JSON; optional OCR via Tesseract.
+  file_path: adapters/input_adapter_png.py
+  skill_md_path: skills/input-png/SKILL.md
+  architecture_doc: null
+  dependencies:
+    external_binaries:
+      - tesseract
+    mcps: []
+    python_libraries:
+      - Pillow
+      - pytesseract
+    plugin_internal: []
+  user_facing_invariants:
+    - "CLI: <png-paths> --out <json> [--ocr]."
+    - "Without OCR, emits image paths + dimensions (visual-diff works; classifier sees empty shapes)."
+    - "Pillow is the only hard requirement."
+  uat_exposed: no
+  uat_exposure_notes: "Not exposed."
+
+- name: input_adapter_ppt
+  type: adapter
+  purpose: Legacy .ppt → .pptx via LibreOffice headless. Detects binary at common paths; errors with install instructions if missing.
+  file_path: adapters/input_adapter_ppt.py
+  skill_md_path: skills/input-ppt/SKILL.md
+  architecture_doc: null
+  dependencies:
+    external_binaries:
+      - libreoffice
+      - soffice
+    mcps: []
+    python_libraries: []
+    plugin_internal: []
+  user_facing_invariants:
+    - "CLI: <ppt> --out-dir <dir>."
+    - "find_libreoffice() checks: `libreoffice`, `soffice`, /Applications/LibreOffice.app/Contents/MacOS/soffice."
+    - "RuntimeError with install instructions if LibreOffice not found — never silently fails."
+    - "Conversion is LOSSY: fonts may substitute, complex shapes may flatten, theme colors may not survive."
+  uat_exposed: yes
+  uat_exposure_notes: "/api/upload auto-invokes when uploaded file has .ppt extension. UAT pre-checks find_libreoffice() and refuses with install instructions before subprocess spin."
+
+- name: story_from_deck
+  type: adapter
+  purpose: Reverse-engineer Deck IR from a .pptx — extract title/body/notes/layout per slide, infer beats + throughline candidates.
+  file_path: adapters/story_from_deck.py
+  skill_md_path: skills/story-from-deck/SKILL.md
+  architecture_doc: null
+  dependencies:
+    external_binaries: []
+    mcps: []
+    python_libraries:
+      - python-pptx
+      - pyyaml
+    plugin_internal:
+      - _common
+  user_facing_invariants:
+    - "CLI: <pptx> --style <name> --out <ir.yaml>."
+    - "v0.2 scope; style-aware (loads style via style_loader)."
+    - "Uses _common.detect_intent_from_name for layout → IR intent inference (same as extractor)."
+  uat_exposed: no
+  uat_exposure_notes: "Not exposed."
+
+- name: style_loader
+  type: adapter
+  purpose: Load a storytelling style by name; resolve `extends:` chain; user-shipped styles win over plugin-shipped.
+  file_path: adapters/style_loader.py
+  skill_md_path: skills/storytelling-style-library/SKILL.md
+  architecture_doc: null
+  dependencies:
+    external_binaries: []
+    mcps: []
+    python_libraries:
+      - pyyaml
+      - jsonschema
+    plugin_internal: []
+  user_facing_invariants:
+    - "User styles in ~/.cowork/plugins/slide-publisher/styles/*.yaml > plugin/styles/*.yaml of same name."
+    - "Merge: parent then child; child keys override; nested dicts merge; arrays replace."
+    - "Validates the resolved style against styles/schema.json (when jsonschema available)."
+  uat_exposed: no
+  uat_exposure_notes: "Not exposed."
+
+- name: story_from_transcript
+  type: adapter
+  purpose: Mechanical transcript analysis — extract throughline candidates, beat segments, metrics, quotes for the conversational skill.
+  file_path: adapters/story_from_transcript.py
+  skill_md_path: skills/story-from-transcript/SKILL.md
+  architecture_doc: null
+  dependencies:
+    external_binaries: []
+    mcps: []
+    python_libraries: []
+    plugin_internal:
+      - _common
+  user_facing_invariants:
+    - "Heuristic only — no LLM calls, no network."
+    - "Processes the user's transcript locally (privacy invariant from SKILL.md)."
+    - "Surfaces top-3 throughline candidates — skill asks user to pick; refuses to fabricate."
+  uat_exposed: no
+  uat_exposure_notes: "Not exposed."
+
+
+# ============================================================================
+# VISUAL QA ROUTINE (v0.2.0-dev)
+# ============================================================================
+
+- name: visual-qa-routine
+  type: skill
+  purpose: Continuous visual regression + auto-improvement loop wrapping render + screenshot + diff + diagnose + remediate.
+  file_path: skills/visual-qa-routine/SKILL.md
+  skill_md_path: skills/visual-qa-routine/SKILL.md
+  architecture_doc:
+    - docs/LOSS-MANIFEST.md
+  dependencies:
+    external_binaries:
+      - libreoffice
+      - pdftoppm
+    mcps: []
+    python_libraries:
+      - pyyaml
+      - python-pptx
+    plugin_internal:
+      - _common
+      - template-extractor-pptx
+      - pptx_renderer
+      - visual_diff
+      - iterate_to_parity
+  user_facing_invariants:
+    - "Run BEFORE any change to a renderer, _common.py rendering helpers, or template-touching adapter."
+    - "uat/preflight.py BLOCKS on regression > SSIM threshold; WARNS on `new` (no baseline yet)."
+    - "Figma renders not in automated matrix — require chat-mediated MCP access (v0.2.x)."
+    - "Baselines are deliberate. Changes require --capture-baseline + review."
+  uat_exposed: no
+  uat_exposure_notes: "Not exposed in UAT; runs from CLI + preflight."
+
+- name: run_renders
+  type: adapter
+  purpose: Matrix harness — iterates (IR, template, renderer) tuples; renders + rasterizes + diffs against baselines.
+  file_path: tests/visual-qa/run_renders.py
+  skill_md_path: skills/visual-qa-routine/SKILL.md
+  architecture_doc:
+    - docs/LOSS-MANIFEST.md
+  dependencies:
+    external_binaries:
+      - libreoffice
+      - pdftoppm
+    mcps: []
+    python_libraries:
+      - pyyaml
+    plugin_internal:
+      - template-extractor-pptx
+      - pptx_renderer
+  user_facing_invariants:
+    - "Figma matrix-row not implemented — Figma renders are chat-mediated, not CI-friendly."
+    - "Output isolated under tests/visual-qa/runs/<timestamp>/ ; older runs pruned via --keep-runs."
+  uat_exposed: no
+  uat_exposure_notes: "Not exposed in UAT; runs from CLI."
+
+- name: visual_anomaly_diagnose
+  type: adapter
+  purpose: Rules-based classifier — maps per-region visual_diff output to structured anomaly findings + recommended fixes.
+  file_path: adapters/visual_anomaly_diagnose.py
+  skill_md_path: skills/visual-qa-routine/SKILL.md
+  architecture_doc:
+    - docs/LOSS-MANIFEST.md
+  dependencies:
+    external_binaries: []
+    mcps: []
+    python_libraries: []
+    plugin_internal:
+      - visual_diff
+  user_facing_invariants:
+    - "Each rule emits structured findings with severity + recommended_fix + deterministic_fix flag."
+    - "deterministic_fix=true findings are consumed by iterate_to_parity for auto-remediation."
+    - "v0.1 has 5 rules: title_overflow, missing_fill, empty_body, missing_decoration, font_substitution."
+  uat_exposed: no
+  uat_exposure_notes: "Not exposed in UAT; runs from CLI, harness, and iterate_to_parity."

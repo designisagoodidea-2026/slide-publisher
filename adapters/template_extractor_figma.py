@@ -54,16 +54,36 @@ from _common import (  # noqa: E402
 
 
 def map_templates_to_intents(slide_templates: list[dict]) -> dict[str, str]:
-    """Map IR layout_intent → Figma node_id based on title_text match.
+    """Map IR layout_intent → Figma node_id.
 
-    First match wins; each node_id is used at most once. Mirrors the pptx
-    extractor's pattern-dictionary approach for cross-format consistency.
+    Two paths:
+      1. Direct intent (preferred, 0.2.0-dev+): if a slide template carries an
+         `intent` field (set by the MCP probe from shared plugin data
+         `slide_publisher.intent` or from an off-canvas INTENT text node),
+         use it directly. This is how the starter template and any
+         template authored via our setup conventions are extracted.
+      2. Pattern match on title_text (legacy, 0.1.x): fall back to the
+         INTENT_PATTERNS dict — matches Figma slides whose title text
+         resembles an IR intent name. Used for user-supplied Figma decks
+         that pre-date the shared-plugin-data convention.
     """
     mapping: dict[str, str] = {}
     used_ids: set[str] = set()
+    # Path 1 — direct intent
+    for tpl in slide_templates:
+        intent = tpl.get("intent")
+        node_id = tpl.get("node_id", "")
+        if intent and intent in LAYOUT_INTENTS and node_id and node_id not in used_ids:
+            mapping[intent] = node_id
+            used_ids.add(node_id)
+    # Path 2 — pattern fallback for intents not yet mapped
     for intent in LAYOUT_INTENTS:
+        if intent in mapping:
+            continue
         for pattern in INTENT_PATTERNS[intent]:
             for tpl in slide_templates:
+                if tpl.get("intent"):
+                    continue  # already handled in path 1
                 node_id = tpl.get("node_id", "")
                 title = tpl.get("title_text", "")
                 if not node_id or node_id in used_ids:

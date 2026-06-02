@@ -7,6 +7,8 @@ description: Synthesize a slide-publisher template profile from a Figma file. Us
 
 Drive the Figma MCP to inspect a slide-template-rich Figma file, then post-process the result into a candidate template-profile entry. The skill encodes the Plugin API rules; the adapter does the normalization.
 
+> **2026-06-01 architecture lock.** The MCP this skill drives is the **Anthropic-hosted Figma MCP** (`mcp__<server>__use_figma`), invoked from a Cowork/Claude session. The user does NOT need Figma Desktop or any user-installed Figma plugin — the MCP executes the Plugin API JavaScript server-side. The earlier "open Figma Desktop, install our plugin script" architecture is retired.
+
 ## When this skill triggers
 
 - The user supplies a Figma file key during `template-setup` Step 3 (extraction).
@@ -22,8 +24,8 @@ Do NOT trigger when:
 ## Required inputs
 
 1. **Figma file key.** Extract from the Figma URL: `figma.com/design/<file_key>/<filename>`.
-2. **Figma MCP connected.** Run `cowork plugin grant slide-publisher --mcp figma` first. If not connected, refuse and surface the grant command.
-3. **Figma Desktop app open** with the target file active. See Rule 7 below — browser-only sessions hit more timeouts. *(Inherited from cos-figma-publish-chain.)*
+2. **Figma MCP connected.** The Anthropic-hosted Figma MCP must be wired into the Cowork session. Run `cowork plugin grant slide-publisher --mcp figma` first; if the MCP isn't registered, surface the connector install command.
+3. **Figma account authenticated.** The session's Figma MCP credential must have at least Edit access to the supplied file_key. No Figma Desktop install is required — the MCP runs server-side.
 
 ## The 8 Plugin API rules *(non-negotiable)*
 
