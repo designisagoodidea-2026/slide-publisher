@@ -1,0 +1,37 @@
+style_version: "1.0.0"
+name: Case study (STAR)
+description: |
+  Situation / Task / Action / Result. The interview-answer shape. One
+  cohesive story arc per case, with strict order and balanced beat density.
+  Optimized for portfolio case studies, project readouts, and behavioral-
+  interview answers.
+authority: "STAR method (interview coaching tradition); Amazon Bar Raiser tradition"
+
+arc_set: [case-led, situation-first, reverse-chronological]
+default_arc: case-led
+
+beats:
+  hook:        {min: 1, max: 1, layout_intents: [title, callout]}
+  context:     {min: 1, max: 2, layout_intents: [claim_with_evidence, image_with_caption, timeline]}
+  problem:     {min: 1, max: 2, layout_intents: [claim_with_evidence, callout]}
+  claim:       {min: 1, max: 1, layout_intents: [callout, claim_with_evidence]}
+  evidence:    {min: 2, max: 4, layout_intents: [three_pillars, image_with_caption, metrics, comparison]}
+  tension:     {min: 0, max: 1, layout_intents: [comparison, callout]}
+  resolution:  {min: 1, max: 2, layout_intents: [metrics, three_pillars, callout]}
+  callback:    {min: 1, max: 1, layout_intents: [callout]}
+  next:        {min: 0, max: 1, layout_intents: [callout]}
+
+density:
+  slides_per_minute: 1.0
+  max_body_blocks_per_slide: 3
+  prefer_visual: true
+  prefer_quote_over_metric: false
+
+posture: expert-as-hero
+evidence_weighting: balanced
+
+voice_notes: |
+  Honor STAR order — Situation, Task, Action, Result — even when the IR
+  beat names differ.
+  Result is the highest-density beat; lead with the headline metric.
+  Speaker plays themselves; humility about luck + clarity about choices.

@@ -1,0 +1,36 @@
+style_version: "1.0.0"
+name: Tufte data
+description: |
+  Data-first, high-density, integrity-driven. Show the numbers; let them
+  speak. Slides are reference artifacts the audience can study, not theatre
+  the speaker performs. Optimized for research readouts and analytical reviews.
+authority: "Edward Tufte (The Visual Display of Quantitative Information)"
+
+arc_set: [framework, case-led, situation-first]
+default_arc: framework
+
+beats:
+  hook:        {min: 1, max: 1, layout_intents: [metrics, callout]}
+  context:     {min: 1, max: 2, layout_intents: [metrics, claim_with_evidence, timeline]}
+  problem:     {min: 1, max: 2, layout_intents: [metrics, comparison]}
+  claim:       {min: 1, max: 2, layout_intents: [claim_with_evidence, metrics]}
+  evidence:    {min: 4, max: 8, layout_intents: [metrics, comparison, timeline, claim_with_evidence]}
+  tension:     {min: 1, max: 2, layout_intents: [comparison, metrics]}
+  resolution:  {min: 1, max: 2, layout_intents: [claim_with_evidence, metrics]}
+  callback:    {min: 0, max: 1, layout_intents: [claim_with_evidence]}
+  next:        {min: 0, max: 1, layout_intents: [callout, claim_with_evidence]}
+
+density:
+  slides_per_minute: 1.5
+  max_body_blocks_per_slide: 6
+  prefer_visual: true
+  prefer_quote_over_metric: false
+
+posture: expert-as-data-keeper
+evidence_weighting: data-leaning
+
+voice_notes: |
+  Show the data. Avoid chartjunk. Annotate sparklines and tables in place
+  rather than narrating them.
+  Body_blocks of kind `metric` are first-class; bullets should rarely appear.
+  Density is a feature, not a bug — give the audience something to study.

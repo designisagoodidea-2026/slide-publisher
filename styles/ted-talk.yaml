@@ -1,0 +1,35 @@
+style_version: "1.0.0"
+name: TED talk
+description: |
+  Hero's Journey arc, audience-as-hero posture, low-density slides with
+  emotional through-line. Optimized for 15-20 minute spoken delivery with
+  emphasis on contrast and a single takeaway.
+authority: "Joseph Campbell (Hero's Journey); TED Conferences"
+
+arc_set: [hero-journey, provocation, situation-first]
+default_arc: hero-journey
+
+beats:
+  hook:        {min: 1, max: 1, layout_intents: [title, callout, quote]}
+  context:     {min: 1, max: 2, layout_intents: [claim_with_evidence, image_with_caption]}
+  problem:     {min: 1, max: 2, layout_intents: [callout, quote]}
+  evidence:    {min: 2, max: 4, layout_intents: [quote, image_with_caption, metrics]}
+  tension:     {min: 1, max: 2, layout_intents: [comparison]}
+  resolution:  {min: 1, max: 2, layout_intents: [three_pillars, callout]}
+  callback:    {min: 1, max: 1, layout_intents: [callout]}
+  next:        {min: 0, max: 1, layout_intents: [callout]}
+
+density:
+  slides_per_minute: 0.7
+  max_body_blocks_per_slide: 2
+  prefer_visual: true
+  prefer_quote_over_metric: true
+
+posture: audience-as-hero
+evidence_weighting: story-leaning
+
+voice_notes: |
+  Lead with the audience's struggle, not the speaker's expertise.
+  Use second person ("you") more than first person ("I").
+  Anchor each major beat with a concrete sensory image.
+  Close on the callback — the throughline as a single, memorable line.

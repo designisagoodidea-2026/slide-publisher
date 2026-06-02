@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://designisagoodidea-2026.github.io/slide-publisher/schemas/style/v1.json",
+  "title": "Slide Publisher — Storytelling Style",
+  "description": "A named storytelling configuration. Determines which narrative arcs, beat allocations, layout-intent priors, density rules, and rhetorical posture the compiler applies. Users pick a style at compile time, override keys, or author their own.",
+  "type": "object",
+  "required": [
+    "style_version", "name", "description", "arc_set", "default_arc",
+    "beats", "density", "posture", "evidence_weighting"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "style_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "Semver of the style schema. v0.2 styles emit '1.0.0'."
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Human-readable style name. Shown in the wizard."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "description": "What the style optimizes for, when to use it, what it sacrifices."
+    },
+    "authority": {
+      "type": "string",
+      "description": "Who or what the style derives from (e.g., 'Joseph Campbell (Hero's Journey)'). Optional."
+    },
+    "arc_set": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "enum": [
+          "problem-first", "situation-first", "provocation",
+          "case-led", "reverse-chronological",
+          "hero-journey", "sparkline", "pyramid", "framework"
+        ]
+      },
+      "description": "Arcs the compiler may use. First entry is the default unless `default_arc` is set."
+    },
+    "default_arc": {
+      "type": "string",
+      "description": "Default arc when the user doesn't specify one. Must be in arc_set."
+    },
+    "beats": {
+      "type": "object",
+      "description": "Per-beat allocation rules. Keys are IR beat names; values configure min/max count + allowed layout intents.",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["layout_intents"],
+        "additionalProperties": false,
+        "properties": {
+          "min": {"type": "integer", "minimum": 0, "default": 0},
+          "max": {"type": "integer", "minimum": 0, "default": 99},
+          "layout_intents": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "enum": [
+                "title", "section_break", "claim_with_evidence",
+                "three_pillars", "comparison", "quote",
+                "image_with_caption", "metrics", "timeline", "callout"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "density": {
+      "type": "object",
+      "required": ["slides_per_minute", "max_body_blocks_per_slide", "prefer_visual"],
+      "additionalProperties": false,
+      "properties": {
+        "slides_per_minute": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 5,
+          "description": "Target slide count = duration_min × slides_per_minute. Reynolds ~0.5; McKinsey ~1.5; Tufte ~1.5."
+        },
+        "max_body_blocks_per_slide": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 12,
+          "description": "Compiler refuses to allocate more body_blocks than this per slide."
+        },
+        "prefer_visual": {
+          "type": "boolean",
+          "description": "When true, body block selection biases toward image_placeholder/diagram_placeholder over prose/bullets."
+        },
+        "prefer_quote_over_metric": {
+          "type": "boolean",
+          "description": "Tie-breaker when both quote and metric block kinds are candidates."
+        }
+      }
+    },
+    "posture": {
+      "type": "string",
+      "enum": [
+        "audience-as-hero",
+        "expert-as-hero",
+        "expert-as-data-keeper",
+        "neutral"
+      ],
+      "description": "Rhetorical posture. Affects voice_notes the compiler suggests."
+    },
+    "evidence_weighting": {
+      "type": "string",
+      "enum": ["story-leaning", "data-leaning", "balanced"],
+      "description": "Tilt of evidence selection when the IR's evidence_anchor is 'hybrid'."
+    },
+    "voice_notes": {
+      "type": "string",
+      "description": "Guidance the compiler surfaces to the user about voice + word choice."
+    },
+    "extends": {
+      "type": "string",
+      "description": "Optional name of a parent style to inherit from. Style file's own keys override parent keys."
+    }
+  }
+}

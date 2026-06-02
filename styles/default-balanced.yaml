@@ -1,0 +1,35 @@
+style_version: "1.0.0"
+name: Default (balanced)
+description: |
+  Middle-of-the-road defaults. Use when you don't know which other style
+  fits. Moderate density, balanced posture, no rhetorical commitment.
+  The compiler's behavior under this style matches v0.1 outline-mode.
+authority: "Slide Publisher v0.1 defaults"
+
+arc_set: [situation-first, problem-first, provocation, case-led, framework]
+default_arc: situation-first
+
+beats:
+  hook:        {min: 1, max: 1, layout_intents: [title, callout]}
+  context:     {min: 1, max: 2, layout_intents: [claim_with_evidence, timeline, image_with_caption]}
+  problem:     {min: 1, max: 2, layout_intents: [claim_with_evidence, comparison, callout]}
+  claim:       {min: 1, max: 2, layout_intents: [claim_with_evidence, callout, three_pillars]}
+  evidence:    {min: 2, max: 5, layout_intents: [claim_with_evidence, metrics, quote, image_with_caption, three_pillars]}
+  tension:     {min: 0, max: 2, layout_intents: [comparison, callout]}
+  resolution:  {min: 1, max: 2, layout_intents: [three_pillars, callout]}
+  callback:    {min: 1, max: 1, layout_intents: [callout]}
+  next:        {min: 0, max: 1, layout_intents: [callout, timeline]}
+
+density:
+  slides_per_minute: 1.0
+  max_body_blocks_per_slide: 3
+  prefer_visual: true
+  prefer_quote_over_metric: false
+
+posture: neutral
+evidence_weighting: balanced
+
+voice_notes: |
+  Audience and posture are deck-specific; no global recommendation.
+  Use this style as a starting point; switch to a more opinionated one
+  when you know what you're trying to do.

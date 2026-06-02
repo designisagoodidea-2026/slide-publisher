@@ -1,0 +1,35 @@
+style_version: "1.0.0"
+name: Duarte sparkline
+description: |
+  Oscillate "what is" with "what could be" throughout. Persuasion-shaped.
+  Each beat alternates between the broken present and the better future
+  the audience can choose. Optimized for vision-and-call-to-action talks.
+authority: "Nancy Duarte (Resonate)"
+
+arc_set: [sparkline, provocation, situation-first]
+default_arc: sparkline
+
+beats:
+  hook:        {min: 1, max: 1, layout_intents: [title, callout]}
+  context:     {min: 1, max: 1, layout_intents: [claim_with_evidence]}
+  problem:     {min: 1, max: 2, layout_intents: [callout, comparison]}
+  claim:       {min: 1, max: 2, layout_intents: [callout, claim_with_evidence]}
+  evidence:    {min: 2, max: 4, layout_intents: [comparison, quote, image_with_caption]}
+  tension:     {min: 1, max: 2, layout_intents: [comparison, callout]}
+  resolution:  {min: 1, max: 2, layout_intents: [three_pillars, callout]}
+  callback:    {min: 1, max: 1, layout_intents: [callout]}
+  next:        {min: 1, max: 1, layout_intents: [callout]}
+
+density:
+  slides_per_minute: 0.8
+  max_body_blocks_per_slide: 2
+  prefer_visual: true
+  prefer_quote_over_metric: false
+
+posture: audience-as-hero
+evidence_weighting: balanced
+
+voice_notes: |
+  Every major beat should land on a contrast — "today X / tomorrow Y."
+  Use `comparison` layouts heavily.
+  The callback names what the audience gains by choosing change.

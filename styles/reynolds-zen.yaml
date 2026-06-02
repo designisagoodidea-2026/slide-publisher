@@ -1,0 +1,35 @@
+style_version: "1.0.0"
+name: Reynolds Zen
+description: |
+  Visual-heavy minimalism. One idea per slide; one image + one phrase.
+  Slides exist to anchor what the speaker says, not to repeat it.
+  Reject chartjunk and bullet-heavy slides.
+authority: "Garr Reynolds (Presentation Zen)"
+
+arc_set: [situation-first, problem-first, provocation]
+default_arc: situation-first
+
+beats:
+  hook:        {min: 1, max: 1, layout_intents: [title, image_with_caption, quote]}
+  context:     {min: 1, max: 2, layout_intents: [image_with_caption, callout]}
+  problem:     {min: 1, max: 2, layout_intents: [image_with_caption, callout]}
+  claim:       {min: 1, max: 2, layout_intents: [callout, image_with_caption]}
+  evidence:    {min: 2, max: 4, layout_intents: [image_with_caption, quote, metrics]}
+  tension:     {min: 1, max: 2, layout_intents: [comparison, image_with_caption]}
+  resolution:  {min: 1, max: 2, layout_intents: [callout, three_pillars]}
+  callback:    {min: 1, max: 1, layout_intents: [callout, image_with_caption]}
+  next:        {min: 0, max: 1, layout_intents: [callout]}
+
+density:
+  slides_per_minute: 0.6
+  max_body_blocks_per_slide: 1
+  prefer_visual: true
+  prefer_quote_over_metric: true
+
+posture: audience-as-hero
+evidence_weighting: story-leaning
+
+voice_notes: |
+  Each slide carries ONE idea. No body_blocks beyond a single image or quote.
+  Speaker carries the content; the slide is visual punctuation.
+  If a slide would need a paragraph of body text, split it into multiple slides.

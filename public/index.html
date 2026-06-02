@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>slide-publisher — story-aware slide generation</title>
+<style>
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
+  font-size: 16px;
+  line-height: 1.55;
+  color: #1a1d23;
+  background: #fff;
+}
+.wrap { max-width: 900px; margin: 0 auto; padding: 0 24px; }
+header.hero {
+  background: linear-gradient(180deg, #1F2A44 0%, #2c3957 100%);
+  color: #fff;
+  padding: 64px 0 56px;
+  border-bottom: 4px solid #E2A03F;
+}
+header.hero h1 { font-size: 44px; margin: 0 0 12px; letter-spacing: -0.02em; }
+header.hero .tagline { font-size: 20px; opacity: 0.85; margin: 0 0 28px; max-width: 720px; }
+.badges { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+.badge {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.18);
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+}
+.evidence {
+  background: #E2A03F; color: #1F2A44;
+  padding: 14px 18px; border-radius: 8px;
+  margin-top: 28px;
+  font-weight: 600;
+  display: inline-block;
+}
+section { padding: 56px 0; border-bottom: 1px solid #e8eaef; }
+section.alt { background: #f7f8fa; }
+h2 { font-size: 30px; letter-spacing: -0.01em; margin: 0 0 8px; }
+h2 + .lede { color: #5b6470; font-size: 18px; margin: 0 0 28px; max-width: 700px; }
+h3 { font-size: 20px; margin: 28px 0 10px; }
+p { margin: 0 0 14px; }
+code, pre {
+  font-family: "SF Mono", Menlo, Monaco, Consolas, monospace;
+  font-size: 14px;
+}
+code { background: #f0f2f6; padding: 2px 6px; border-radius: 3px; color: #1F2A44; }
+pre { background: #1F2A44; color: #e8eaef; padding: 18px 20px; border-radius: 6px; overflow-x: auto; }
+pre code { background: none; padding: 0; color: inherit; }
+
+.pipeline { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 24px 0 8px; }
+.stage {
+  background: #fff; border: 1px solid #d9dde4; border-radius: 6px;
+  padding: 14px 12px; text-align: center; font-size: 13px;
+}
+.stage .num {
+  display: inline-block; width: 22px; height: 22px;
+  line-height: 22px; border-radius: 50%;
+  background: #3F6AB1; color: #fff; font-weight: 700; margin-bottom: 8px;
+}
+.stage h4 { font-size: 13px; margin: 0 0 4px; color: #1F2A44; }
+.stage p { font-size: 12px; color: #5b6470; margin: 0; line-height: 1.4; }
+.arrow { color: #aab1bd; text-align: center; line-height: 80px; font-size: 18px; }
+
+table { width: 100%; border-collapse: collapse; margin: 18px 0; }
+th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #e8eaef; font-size: 14px; }
+th { background: #f0f2f6; font-weight: 600; }
+.verdict-pass { color: #1d6b35; font-weight: 600; }
+.verdict-warn { color: #b07300; font-weight: 600; }
+.verdict-fail { color: #a63131; font-weight: 600; }
+
+.feature-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px; }
+.feature {
+  background: #fff; border: 1px solid #d9dde4; border-radius: 8px;
+  padding: 22px;
+}
+.feature h3 { margin-top: 0; }
+
+.cta { display: inline-block; background: #1F2A44; color: #fff; padding: 12px 22px; border-radius: 6px; text-decoration: none; font-weight: 600; }
+.cta:hover { background: #2c3957; }
+.cta.outline { background: transparent; color: #1F2A44; border: 1px solid #1F2A44; margin-left: 8px; }
+.cta.outline:hover { background: #1F2A44; color: #fff; }
+
+footer { padding: 36px 0; color: #5b6470; font-size: 14px; }
+footer a { color: #3F6AB1; }
+
+@media (max-width: 720px) {
+  .pipeline { grid-template-columns: 1fr 1fr; }
+  .feature-grid { grid-template-columns: 1fr; }
+  header.hero h1 { font-size: 32px; }
+  header.hero .tagline { font-size: 17px; }
+}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <h1>slide-publisher</h1>
+    <p class="tagline">Story-aware slide generation across PowerPoint and Figma Slides. Detects whether your file is a real template, a deck-with-an-implicit-pattern, or something in between — and routes accordingly.</p>
+    <div>
+      <a href="https://github.com/designisagoodidea-2026/slide-publisher" class="cta">View on GitHub</a>
+      <a href="#install" class="cta outline">Install</a>
+    </div>
+    <div class="evidence">✓ Externally validated: 12 of 12 native templates we didn't design pass or warn</div>
+    <div class="badges">
+      <span class="badge">v0.1.0</span>
+      <span class="badge">Python 3.10+</span>
+      <span class="badge">MIT license</span>
+      <span class="badge">Cowork plugin</span>
+      <span class="badge">PowerPoint + Figma Slides</span>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <h2>What makes this different</h2>
+    <p class="lede">Most slide tooling assumes you bring a polished template. In practice, most people don't. They have a folder of decks that share a brand identity by author discipline, with no underlying master/layout structure to anchor a renderer to.</p>
+    <p>slide-publisher handles both cases. The plugin <strong>classifies</strong> the file you supply — is this a structured template, or a deck-with-implicit-pattern? — and routes accordingly:</p>
+    <div class="feature-grid">
+      <div class="feature">
+        <h3>Real template</h3>
+        <p>Extract the layout catalog and style tokens directly. The extractor reads the layout names, master XML, and theme XML; the validator audits across six structural criteria.</p>
+      </div>
+      <div class="feature">
+        <h3>Deck-with-implicit-pattern</h3>
+        <p>Cluster the recurring visual patterns, synthesize a candidate template, then extract from that. The user reviews the synthesized template before locking it in.</p>
+      </div>
+      <div class="feature">
+        <h3>Mixed</h3>
+        <p>Surface both options to the user with the classifier's diagnostic signals. They choose.</p>
+      </div>
+      <div class="feature">
+        <h3>Auto-remediation</h3>
+        <p>When the validator flags issues, the auto-remediator applies deterministic fixes (layout renaming, theme alignment) and re-validates. Every change lands in an audit log.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="alt">
+  <div class="wrap">
+    <h2>The pipeline</h2>
+    <p class="lede">Each step is a Cowork skill backed by a Python adapter. The skills compose; the adapters share a common module (<code>_common.py</code>) for IR catalogs, heuristics, and the loss-manifest dataclass.</p>
+
+    <h3>Story-to-deck path</h3>
+    <div class="pipeline">
+      <div class="stage"><span class="num">1</span><h4>story-compiler</h4><p>Outline → Deck IR (YAML)</p></div>
+      <div class="stage"><span class="num">2</span><h4>slide-ir-validator</h4><p>Schema + 7 lint rules</p></div>
+      <div class="stage"><span class="num">3</span><h4>render-pptx / render-figma</h4><p>IR + profile → deck</p></div>
+      <div class="stage"><span class="num">4</span><h4>loss manifest</h4><p>md + JSON sidecar</p></div>
+    </div>
+
+    <h3>Template-setup path</h3>
+    <div class="pipeline">
+      <div class="stage"><span class="num">1</span><h4>template-classifier</h4><p>Template / deck / mixed</p></div>
+      <div class="stage"><span class="num">2</span><h4>template-synthesizer-*</h4><p>Cluster recurring patterns</p></div>
+      <div class="stage"><span class="num">3</span><h4>template-extractor-*</h4><p>Layout map + tokens</p></div>
+      <div class="stage"><span class="num">4</span><h4>template-validator</h4><p>6-criteria audit</p></div>
+    </div>
+
+    <h3>Remediation loop</h3>
+    <div class="pipeline">
+      <div class="stage"><span class="num">5</span><h4>remediation-apply-*</h4><p>Auto-fix + audit log</p></div>
+      <div class="stage"><span class="num">6</span><h4>visual-diff</h4><p>phash + SSIM + HTML</p></div>
+      <div class="stage"><span class="num">7</span><h4>iterate-to-parity</h4><p>Render → diff → adjust</p></div>
+      <div class="stage"><span class="num">8</span><h4>lock profile.yaml</h4><p>Ready for repeat use</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>External validation</h2>
+    <p class="lede">Tests written against fixtures you designed prove the code does what you designed — not whether the design is right. Slide-publisher's model was calibrated against templates the plugin authors did not author.</p>
+
+    <h3>Microsoft PowerPoint built-in themes</h3>
+    <table>
+      <thead><tr><th>Theme</th><th>Classifier</th><th>Quality score</th><th>Validator</th></tr></thead>
+      <tbody>
+        <tr><td>Atlas</td><td>template (0.43)</td><td>86</td><td class="verdict-pass">pass</td></tr>
+        <tr><td>Gallery</td><td>template (0.43)</td><td>86</td><td class="verdict-pass">pass</td></tr>
+        <tr><td>Madison</td><td>template (0.43)</td><td>86</td><td class="verdict-pass">pass</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Random web-sourced .pptx templates</h3>
+    <table>
+      <thead><tr><th>Template</th><th>Domain</th><th>Validator</th></tr></thead>
+      <tbody>
+        <tr><td>AFPC AFCS template</td><td>Military / federal</td><td class="verdict-pass">pass</td></tr>
+        <tr><td>AUA 2025 Join Me slide</td><td>Medical / association</td><td class="verdict-pass">pass</td></tr>
+        <tr><td>Adobe Sign for Word and PowerPoint</td><td>Commercial</td><td class="verdict-pass">pass</td></tr>
+        <tr><td>Mississippi State Option 4</td><td>University</td><td class="verdict-pass">pass</td></tr>
+        <tr><td>Teams Intro V2</td><td>Corporate</td><td class="verdict-pass">pass</td></tr>
+        <tr><td>OCC PowerPoint template 2026</td><td>Academic / regulatory</td><td class="verdict-pass">pass</td></tr>
+        <tr><td>UW Simple PowerPoint template</td><td>University</td><td class="verdict-pass">pass</td></tr>
+        <tr><td>2-1 FTSW Career Development Boards</td><td>Education</td><td class="verdict-warn">warn</td></tr>
+        <tr><td>Serving Students Community Partners</td><td>Education</td><td class="verdict-warn">warn</td></tr>
+      </tbody>
+    </table>
+    <p><strong>12 of 12 native .pptx templates validate as acceptable.</strong> The two warn cases have legitimate findings (low layout-name semantic richness and 60-layout specialized catalog respectively).</p>
+  </div>
+</section>
+
+<section class="alt">
+  <div class="wrap">
+    <h2>The story IR</h2>
+    <p class="lede">The compiler refuses to draft on a vague prompt. Audience, throughline, evidence anchor — supply those, and the IR is the durable artifact every renderer reads.</p>
+    <pre><code>---
+audience:
+  primary: "VP of Design, Series C"
+  prior_knowledge: warm
+throughline: "Our growth model has plateaued; the next $40M is in the middle market."
+arc: provocation
+evidence_anchor: framework
+duration_min: 20
+---
+
+## hook
+The growth model that got us here will not get us to the next milestone.
+
+## context
+Enterprise pipeline has plateaued — four straight quarters flat at 8-10 deals.
+
+## claim
+Three reasons the middle market is the next motion: market shape, sales cycle, competitive window.</code></pre>
+  </div>
+</section>
+
+<section id="install">
+  <div class="wrap">
+    <h2>Install</h2>
+    <pre><code>cowork plugin install slide-publisher
+cowork plugin grant slide-publisher --mcp figma
+cowork run template-setup</code></pre>
+
+    <p>The <code>template-setup</code> wizard is a one-time install workflow. It runs the classifier, extracts or synthesizes a template profile depending on what you supplied, validates the result against six structural criteria, and persists the profile at <code>~/.cowork/plugins/slide-publisher/profile.yaml</code>.</p>
+
+    <h3>Compile and render</h3>
+    <pre><code>cowork run story-compiler --input my-talk.outline.md --out my-talk.ir.yaml
+cowork run slide-ir-validator --strict my-talk.ir.yaml
+cowork run render-pptx --ir my-talk.ir.yaml --out my-talk.pptx
+cowork run render-figma --ir my-talk.ir.yaml</code></pre>
+
+    <p>Each renderer emits a loss manifest naming what was preserved exactly, what was preserved with degradation, what was dropped, and what was annotated.</p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p>MIT license. <a href="https://github.com/designisagoodidea-2026/slide-publisher">Source on GitHub.</a> Roadmap: v0.2 adds Google Slides renderer, transcript-mode and case-study-mode compilers, synthesizer v2 (shape embedding), and a Claude in PowerPoint integration mode for the remediator.</p>
+  </div>
+</footer>
+
+</body>
+</html>

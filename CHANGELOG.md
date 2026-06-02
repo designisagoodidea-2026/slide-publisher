@@ -13,7 +13,7 @@ All notable changes to slide-publisher are documented here. Format follows [Keep
 - Image asset copying in synthesizers.
 - Loss-manifest diff tooling.
 
-## [0.1.0] — pre-release
+## [0.1.0] — 2026-06-01
 
 Initial release. Slice 1 covers the full pipeline: detection → extraction or synthesis → validation → IR compile → render to .pptx or Figma Slides → loss manifest. **Externally validated against 12 templates we didn't design** (3 Microsoft built-in themes + 9 random web-sourced templates) — 12 of 12 validate as acceptable.
 

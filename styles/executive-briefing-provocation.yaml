@@ -1,0 +1,35 @@
+style_version: "1.0.0"
+name: Executive briefing (provocation)
+description: |
+  Open with the uncomfortable claim; unpack support after. Optimized for
+  strategy decks where the audience needs to be moved off a default plan.
+  Matches the existing executive-briefing.yaml example in ir/examples/.
+authority: "Implicit in much strategy-consulting practice"
+
+arc_set: [provocation, problem-first, framework]
+default_arc: provocation
+
+beats:
+  hook:        {min: 1, max: 2, layout_intents: [callout, title]}
+  context:     {min: 1, max: 2, layout_intents: [claim_with_evidence, metrics, section_break]}
+  problem:     {min: 1, max: 2, layout_intents: [claim_with_evidence, callout, metrics]}
+  claim:       {min: 1, max: 2, layout_intents: [callout, three_pillars, section_break]}
+  evidence:    {min: 2, max: 5, layout_intents: [three_pillars, claim_with_evidence, image_with_caption, metrics, comparison]}
+  tension:     {min: 1, max: 2, layout_intents: [comparison, three_pillars]}
+  resolution:  {min: 1, max: 2, layout_intents: [claim_with_evidence, three_pillars]}
+  callback:    {min: 1, max: 1, layout_intents: [callout]}
+  next:        {min: 1, max: 1, layout_intents: [callout, claim_with_evidence]}
+
+density:
+  slides_per_minute: 1.0
+  max_body_blocks_per_slide: 3
+  prefer_visual: false
+  prefer_quote_over_metric: false
+
+posture: expert-as-hero
+evidence_weighting: balanced
+
+voice_notes: |
+  Hook hits hard — the claim that makes the room uncomfortable.
+  Support comes after, structured to anticipate objections.
+  Kill criteria belong in resolution or next — never hidden.
