@@ -1,6 +1,6 @@
 # slide-publisher — Cowork plugin manifest
 name: slide-publisher
-version: 0.2.0-dev
+version: 0.1.0
 display_name: Slide Publisher
 tagline: Story-aware slide generation across PowerPoint and Figma Slides.
 description: |
@@ -17,7 +17,7 @@ requires:
   python: ">=3.10"
 
 skills:
-  # template-setup pipeline (v0.1)
+  # v0.1 — eighteen skills
   - template-setup              # one-time install wizard; produces the template profile
   - template-classifier         # detects template vs. deck-with-implicit-pattern
   - template-synthesizer-pptx   # deck-with-implicit-pattern → synthesized .pptx template
@@ -27,27 +27,21 @@ skills:
   - template-validator          # structural quality check; green/yellow/red findings
   - remediation-apply-pptx      # auto-fix a failing pptx template (layout rename + recommendations)
   - remediation-apply-figma     # auto-fix a failing figma template via MCP
-  # storytelling input (v0.2)
-  - storytelling-style-library  # discover, validate, and author storytelling styles
-  - story-from-outline          # structured outline → IR, style-aware (successor to story-compiler)
-  - story-from-interview        # interactive Q&A → IR, style-aware
-  - story-from-transcript       # transcript / long-form text → IR, style-aware
-  - story-from-deck             # reverse-engineer an existing .pptx into IR
-  - story-compiler              # v0.1 outline compiler — retained for back-compat
+  - story-compiler              # outline-mode input → IR
   - slide-ir-validator          # validates an IR against schema + lint rules
-  # rendering (v0.1)
   - render-pptx                 # IR + template profile → .pptx
   - render-figma                # IR + template profile → Figma Slides
-  # multi-format input + visual feedback (v0.1)
   - input-pdf                   # accept PDF (URL or path) as a deck source
   - input-png                   # accept PNG screenshots as a deck source
   - input-ppt                   # convert legacy .ppt → .pptx via LibreOffice
   - visual-diff                 # per-slide phash + SSIM, HTML side-by-side report
   - iterate-to-parity           # render→diff→adjust loop until visual convergence
-  # v0.3+ (stubs)
-  # - template-extractor-gslides
-  # - template-synthesizer-gslides
-  # - render-gslides
+  # v0.2 (storytelling layer — landing in 0.2.0-dev)
+  # - storytelling-style-library
+  # - story-from-outline
+  # - story-from-interview
+  # - story-from-transcript
+  # - story-from-deck
 
 mcps:
   required:
