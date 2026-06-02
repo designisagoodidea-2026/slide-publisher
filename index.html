@@ -109,11 +109,14 @@ footer a { color: #3F6AB1; }
     </div>
     <div class="evidence">✓ Externally validated: 12 of 12 native templates we didn't design pass or warn</div>
     <div class="badges">
-      <span class="badge">v0.1.0</span>
+      <span class="badge">v0.2.0</span>
       <span class="badge">Python 3.10+</span>
       <span class="badge">MIT license</span>
       <span class="badge">Cowork plugin</span>
       <span class="badge">PowerPoint + Figma Slides</span>
+      <span class="badge">8 storytelling styles</span>
+      <span class="badge">MCP-driven Figma</span>
+      <span class="badge">Visual-QA routine</span>
     </div>
   </div>
 </header>
@@ -146,12 +149,45 @@ footer a { color: #3F6AB1; }
 
 <section class="alt">
   <div class="wrap">
+    <h2>What's in v0.2</h2>
+    <p class="lede">v0.1 shipped the detection-and-remediation kernel and externally validated against 12 templates. v0.2 adds four substantial systems on top.</p>
+    <div class="feature-grid">
+      <div class="feature">
+        <h3>Storytelling layer</h3>
+        <p>8 starter styles — TED-talk, Duarte sparkline, Reynolds Zen, Tufte data, McKinsey pyramid, case-study STAR, executive-briefing provocation, default-balanced. Pick one; bring your own outline, interview transcript, raw transcript, or even an existing deck. Five compile-mode skills handle the entry points; <code>extends:</code> chain resolution + user-style precedence over plugin-shipped.</p>
+      </div>
+      <div class="feature">
+        <h3>MCP-driven Figma template-instance</h3>
+        <p>No Figma Desktop install. No user-installed plugin. The extractor + Stage 2 renderer drive the Anthropic Figma MCP directly — clone named layout slides, populate via <code>setCharacters</code>, restore styling per the 8 Plugin API rules. Output is a real Figma Slides file you open in your browser.</p>
+      </div>
+      <div class="feature">
+        <h3>Deterministic preflight</h3>
+        <p><code>CAPABILITIES.yaml</code> is the single source of truth for every skill, adapter, shared module, and architecture doc (49 entries). <code>uat/preflight.py</code> runs 8 checks — manifest coverage, dependency detection, architecture compliance, visual regression, anonymity grep. Non-zero exit on any blocker. Stops architecture drift mechanically.</p>
+      </div>
+      <div class="feature">
+        <h3>Visual-QA routine</h3>
+        <p>Render harness × baseline manifest × per-region SSIM diff × rules-based anomaly classifier × auto-remediation loop. Preflight BLOCKS on SSIM drift below baseline threshold. Built because correctness of visual artifacts can only be verified visually.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
     <h2>The pipeline</h2>
     <p class="lede">Each step is a Cowork skill backed by a Python adapter. The skills compose; the adapters share a common module (<code>_common.py</code>) for IR catalogs, heuristics, and the loss-manifest dataclass.</p>
 
+    <h3>Story entry points (v0.2 — pick one)</h3>
+    <div class="pipeline">
+      <div class="stage"><span class="num">A</span><h4>story-from-outline</h4><p>Markdown outline → IR</p></div>
+      <div class="stage"><span class="num">B</span><h4>story-from-interview</h4><p>Conversational; skill asks the questions</p></div>
+      <div class="stage"><span class="num">C</span><h4>story-from-transcript</h4><p>Recorded talk → throughline candidates + beats</p></div>
+      <div class="stage"><span class="num">D</span><h4>story-from-deck</h4><p>Reverse-engineer IR from existing .pptx</p></div>
+    </div>
+
     <h3>Story-to-deck path</h3>
     <div class="pipeline">
-      <div class="stage"><span class="num">1</span><h4>story-compiler</h4><p>Outline → Deck IR (YAML)</p></div>
+      <div class="stage"><span class="num">1</span><h4>storytelling-style-library</h4><p>Optional style overlay</p></div>
       <div class="stage"><span class="num">2</span><h4>slide-ir-validator</h4><p>Schema + 7 lint rules</p></div>
       <div class="stage"><span class="num">3</span><h4>render-pptx / render-figma</h4><p>IR + profile → deck</p></div>
       <div class="stage"><span class="num">4</span><h4>loss manifest</h4><p>md + JSON sidecar</p></div>
@@ -168,9 +204,17 @@ footer a { color: #3F6AB1; }
     <h3>Remediation loop</h3>
     <div class="pipeline">
       <div class="stage"><span class="num">5</span><h4>remediation-apply-*</h4><p>Auto-fix + audit log</p></div>
-      <div class="stage"><span class="num">6</span><h4>visual-diff</h4><p>phash + SSIM + HTML</p></div>
-      <div class="stage"><span class="num">7</span><h4>iterate-to-parity</h4><p>Render → diff → adjust</p></div>
-      <div class="stage"><span class="num">8</span><h4>lock profile.yaml</h4><p>Ready for repeat use</p></div>
+      <div class="stage"><span class="num">6</span><h4>visual-diff</h4><p>per-region SSIM + phash + delta</p></div>
+      <div class="stage"><span class="num">7</span><h4>visual_anomaly_diagnose</h4><p>5-rule classifier → findings + fixes</p></div>
+      <div class="stage"><span class="num">8</span><h4>iterate-to-parity</h4><p>Deterministic-fix loop → converge</p></div>
+    </div>
+
+    <h3>Continuous visual-QA (v0.2)</h3>
+    <div class="pipeline">
+      <div class="stage"><span class="num">i</span><h4>render harness</h4><p>(IR × template × renderer) matrix</p></div>
+      <div class="stage"><span class="num">ii</span><h4>baselines.yaml</h4><p>per-render expected SSIM + reference PNG</p></div>
+      <div class="stage"><span class="num">iii</span><h4>preflight gate</h4><p>BLOCKS on SSIM drift below threshold</p></div>
+      <div class="stage"><span class="num">iv</span><h4>auto-remediation</h4><p>Apply deterministic fix → re-render</p></div>
     </div>
   </div>
 </section>
@@ -255,7 +299,8 @@ cowork run render-figma --ir my-talk.ir.yaml</code></pre>
 
 <footer>
   <div class="wrap">
-    <p>MIT license. <a href="https://github.com/designisagoodidea-2026/slide-publisher">Source on GitHub.</a> Roadmap: v0.2 adds Google Slides renderer, transcript-mode and case-study-mode compilers, synthesizer v2 (shape embedding), and a Claude in PowerPoint integration mode for the remediator.</p>
+    <p>MIT license. <a href="https://github.com/designisagoodidea-2026/slide-publisher">Source on GitHub.</a></p>
+    <p>Roadmap: <strong>v0.1 ✓</strong> detection-and-remediation kernel, externally validated. <strong>v0.2 ✓</strong> storytelling layer + MCP-driven Figma template-instance + deterministic preflight + visual-QA routine. <strong>v0.3</strong> Google Slides renderer; richer Figma Slides starter template with brand styling; image-placeholder resolution via image MCPs.</p>
   </div>
 </footer>
 
